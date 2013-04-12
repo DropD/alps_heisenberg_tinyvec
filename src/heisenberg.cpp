@@ -10,28 +10,28 @@ heisenberg_sim::heisenberg_sim(parameters_type const & params, std::size_t seed_
     , total_sweeps(int(parameters["SWEEPS"]))
     , beta(1. / double(parameters["T"]))
     , spin_dim(parameters["SPINDIM"])
-    , spins(length, std::vector<double>(spin_dim))
+    , spins()
 {
+    spins = std::vector<dvec>(length, dvec(spin_dim));
     for(int i = 0; i < length; ++i) {
 
-        double abs2 = 0;
         for(int j = 0; j < spin_dim; ++j) {
 
-            double elem = random();
+            double elem = 2*random() - 1;
+            //double elem = (random() < 0.5 ? 1 : -1);
             spins[i][j] = elem;
-            abs2 += elem*elem;
         }
 
-        double abs = std::sqrt(abs2);
+        double sabs = abs(spins[i]);
         for(int j = 0; j < spin_dim; ++j) {
 
-            spins[i][j] /= abs;
+            spins[i][j] /= sabs;
         }
     }
 
     measurements
         << alps::ngs::RealObservable("Energy")
-        << alps::ngs::RealObservable("Magnetization")
+        << alps::ngs::RealVectorObservable("Magnetization")
         << alps::ngs::RealObservable("Magnetization^2")
         << alps::ngs::RealObservable("Magnetization^4")
         << alps::ngs::RealVectorObservable("Correlations")
@@ -45,20 +45,25 @@ void heisenberg_sim::update() {
         int i = int(double(length) * random());
         int right = (i + 1 < length ? i+1 : 0);
         int left = (i + 1 < length ? length-1 : i-1);
-        double p = exp(2. * beta * spins[i] * (spins[right] + spins[left]));
+        double p = exp(2. * beta * (spins[i] * (spins[right] + spins[left])));
+        if (p >= 1. || random() < p) {
+            spins[i] = -1. * spins[i];
+        }
     }
 }
 
 void heisenberg_sim::measure() {
     sweeps++;
     if (sweeps > thermalization_sweeps) {
-        dvec tmagv(spin_dim);
+        dvec tmag(spin_dim);
         double ten = 0;
+        double sign = 1;
         std::vector<double> corr(length);
 
         for(int i = 0; i < length; ++i) {
-            tmagv = tmagv + spins[i];
-            ten  -= spins[i] * spins[i + 1 < length ? i+1 : 0];
+            tmag = tmag + spins[i];
+            sign  = sign * spins[i][0];
+            ten  += -(spins[i] * spins[i + 1 < length ? i+1 : 0]);
 
             for(int d = 0; d < length; ++d) {
                 corr[d] += spins[i] * spins[(i+d) % length];
@@ -66,11 +71,11 @@ void heisenberg_sim::measure() {
         }
         std::transform(corr.begin(), corr.end(), corr.begin(), boost::lambda::_1 / double(length));
         ten /= length;
-        double tmag = abs(tmagv) / length;
+        tmag = tmag / length;
         measurements["Energy"] << ten;
         measurements["Magnetization"] << tmag;
-        measurements["Magnetization"] << tmag * tmag;
-        measurements["Magnetization"] << tmag * tmag * tmag * tmag;
+        measurements["Magnetization^2"] << tmag * tmag;
+        measurements["Magnetization^4"] << tmag * tmag * tmag * tmag;
         measurements["Correlations"] << corr;
     }
 }
@@ -104,7 +109,7 @@ void heisenberg_sim::load(alps::hdf5::archive & ar) {
     ar.set_context(context);
 }
 
-dvec operator+ (dvec lhs, dvec rhs) {
+inline dvec operator+ (dvec lhs, dvec rhs) {
     assert(lhs.size() == rhs.size());
     size_t n = lhs.size();
 
@@ -116,7 +121,7 @@ dvec operator+ (dvec lhs, dvec rhs) {
     return res;
 }
 
-double operator* (dvec lhs, dvec rhs) {
+inline double operator* (dvec lhs, dvec rhs) {
     assert(lhs.size() == rhs.size());
     size_t n = lhs.size();
 
@@ -128,7 +133,7 @@ double operator* (dvec lhs, dvec rhs) {
     return res;
 }
 
-dvec operator* (double lhs, dvec rhs) {
+inline dvec operator* (double lhs, dvec rhs) {
     dvec res = rhs;
     
     for(int i = 0; i < rhs.size(); ++i) {
@@ -138,7 +143,7 @@ dvec operator* (double lhs, dvec rhs) {
     return res;
 }
 
-dvec operator/ (dvec lhs, double rhs) {
+inline dvec operator/ (dvec lhs, double rhs) {
     dvec res = lhs;
 
     for(int i = 0; i < lhs.size(); ++i) {
@@ -148,6 +153,6 @@ dvec operator/ (dvec lhs, double rhs) {
     return res;
 }
 
-double abs(dvec vec) {
+inline double abs(dvec vec) {
     return std::sqrt(vec * vec);
 }
