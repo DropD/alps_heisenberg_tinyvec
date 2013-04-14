@@ -41,7 +41,6 @@ void heisenberg_sim::update() {
         double p = exp(beta * ((spins[i] - new_spin) * (spins[right] + spins[left])));
         if ( p >= 1. || random() < p )
             spins[i] = new_spin;
-            //spins[i] = -spins[i];
     }
 }
 
@@ -50,11 +49,9 @@ void heisenberg_sim::measure() {
     if (sweeps > thermalization_sweeps) {
         dvec  tmag(spin_dim, 0);
         double ten = 0;
-        //double sign = 1;
         std::vector<double> corr(length);
         for (int i = 0; i < length; ++i) {
             tmag += spins[i];
-            //sign *= spins[i][0];
             ten += -(spins[i] * spins[ i + 1 < length ? i + 1 : 0 ]);
             for (int d = 0; d < length; ++d)
                 corr[d] += spins[i] * spins[( i + d ) % length ];
