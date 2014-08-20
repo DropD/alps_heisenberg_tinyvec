@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="ALPS.xsl"?>
+<SIMULATION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://xml.comp-phys.org/2002/10/ALPS.xsd">
+  <PARAMETERS>
+    <PARAMETER name="LATTICE">square lattice</PARAMETER>
+    <PARAMETER name="MODEL">Heisenberg</PARAMETER>
+    <PARAMETER name="CONVENTION">classical</PARAMETER>
+    <PARAMETER name="UPDATE">local</PARAMETER>
+    <PARAMETER name="L">10</PARAMETER>
+    <PARAMETER name="THERMALIZATION">1000</PARAMETER>
+    <PARAMETER name="SWEEPS">100000</PARAMETER>
+    <PARAMETER name="J1">1</PARAMETER>
+    <PARAMETER name="J2">1</PARAMETER>
+    <PARAMETER name="T">2</PARAMETER>
+    <PARAMETER name="SEED">1383746421</PARAMETER>
+  </PARAMETERS>
+  <MCRUN>
+    <EXECUTED phase="equilibrating">
+      <FROM>2013-Apr-24 15:20:55</FROM>
+      <TO>2013-Apr-24 15:20:55</TO>
+      <MACHINE><NAME>public-docking-hg-11-235.ethz.ch</NAME></MACHINE>
+    </EXECUTED>
+    <EXECUTED phase="running">
+      <FROM>2013-Apr-24 15:20:55</FROM>
+      <TO>2013-Apr-24 15:21:57</TO>
+      <MACHINE><NAME>public-docking-hg-11-235.ethz.ch</NAME></MACHINE>
+    </EXECUTED>
+    <CHECKPOINT format="osiris" file="param.txt.task1.out.run1"/>
+    <CHECKPOINT format="hdf5" file="param.txt.task1.out.run1.h5"/>
+  </MCRUN>
+</SIMULATION>

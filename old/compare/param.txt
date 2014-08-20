@@ -1,0 +1,16 @@
+LATTICE="square lattice"
+MODEL="Heisenberg"
+CONVENTION="classical"
+UPDATE="local"
+L=10
+THERMALIZATION=1000
+SWEEPS=100000
+J1=1
+J2=1
+{T=1;}
+{T=1.5;}
+{T=2;}
+{T=2.5;}
+{T=3;}
+{T=3.5;}
+{T=4;}
