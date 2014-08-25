@@ -27,7 +27,7 @@ class ALPS_DECL heisenberg_sim : public alps::mcbase {
 
     public:
 
-        heisenberg_sim(parameters_type const & parms, const alps::Parameters & old_parms, std::size_t seed_offset = 0);
+        heisenberg_sim(parameters_type const & parms, std::size_t seed_offset = 0);
 
         virtual void update();
         virtual void measure();

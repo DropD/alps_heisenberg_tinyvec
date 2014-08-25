@@ -1,5 +1,9 @@
 *.o
 *.a
 *.swp
+*.swo
 *.h5
 build/
+alps-svn/
+*.in.xml
+ALPS.xsl

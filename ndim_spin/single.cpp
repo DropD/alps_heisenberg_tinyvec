@@ -25,7 +25,7 @@
  *                                                                                 *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "heisenberg.hpp"
+#include "ndim_spin.hpp"
 
 #include <alps/parseargs.hpp>
 #include <alps/stop_callback.hpp>
@@ -38,14 +38,15 @@
 #include <iostream>
 #include <stdexcept>
 
-int main(int argc, char *argv[]) {
+typedef ndim_spin_sim<3> sim_type;
 
+int main(int argc, char *argv[]) {
     try {
         alps::parseargs options(argc, argv);
         std::string checkpoint_file = options.input_file.substr(0, options.input_file.find_last_of('.')) +  ".clone0.h5";
 
         // TODO: make load_params
-        alps::parameters_type<heisenberg_sim>::type parameters;
+        alps::parameters_type<sim_type>::type parameters;
         // TODO: better check the first few bytes. provide an ALPS function to do so
         if (boost::filesystem::extension(options.input_file) == ".xml") {
             parameters = alps::make_parameters_from_xml(options.input_file);
@@ -54,12 +55,10 @@ int main(int argc, char *argv[]) {
             alps::hdf5::archive(options.input_file)["/parameters"] >> parameters;
         }
         else {
-            parameters = alps::parameters_type<heisenberg_sim>::type(options.input_file);
+            parameters = alps::parameters_type<sim_type>::type(options.input_file);
         }
-        //~ alps::Parameters old_parameters = alps::make_deprecated_parameters(parameters);
 
-        //~ heisenberg_sim sim(parameters, old_parameters);
-        heisenberg_sim sim(parameters);
+        sim_type sim(parameters);
 
         if (options.resume)
             sim.load(checkpoint_file);
@@ -69,7 +68,7 @@ int main(int argc, char *argv[]) {
         sim.save(checkpoint_file);
 
         using alps::collect_results;
-        alps::results_type<heisenberg_sim>::type results = collect_results(sim);
+        alps::results_type<sim_type>::type results = collect_results(sim);
 
         std::cout << results << std::endl;
         alps::hdf5::archive ar(options.output_file, "w");

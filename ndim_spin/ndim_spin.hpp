@@ -1,16 +1,66 @@
-/* heisenberg.cpp
- * adapted from heisenberg_beispiel/heisenberg.cpp
- * 1d grid, 3d spins
+/* ndim_spin.hpp
+ * adapted from heisenberg_lattice/heisenberg.hpp
  */
 
-#include "heisenberg.hpp"
-#include "helper.hpp"
+#ifndef HEISENBERG_HPP
+#define HEISENBERG_HPP
 
+#include "spintype.hpp"
+
+#include <alps/mcbase.hpp>
+#include <alps/ngs/numeric.hpp>
 #include <alps/ngs/make_deprecated_parameters.hpp>
+#include <alps/random/uniform_on_sphere_n.h>
+#include <alps/lattice.h>
 
+#include <alps/hdf5/archive.hpp>
+#include <alps/hdf5/vector.hpp>
+#include <alps/hdf5/array.hpp>
+
+#include <boost/function.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/array.hpp>
 #include <boost/lambda/lambda.hpp>
 
-heisenberg_sim::heisenberg_sim(parameters_type const & parms, std::size_t seed_offset)
+#include <vector>
+#include <string>
+
+template <int N>
+class ALPS_DECL ndim_spin_sim : public alps::mcbase {
+
+    public:
+        typedef spintype<N> spintype;
+        ndim_spin_sim(parameters_type const & parms, std::size_t seed_offset = 0);
+
+        virtual void update();
+        virtual void measure();
+        virtual double fraction_completed() const;
+
+        const spintype random_spin_accept_reject();
+        const spintype random_spin();
+
+        using alps::mcbase::save;
+        virtual void save(alps::hdf5::archive & ar) const;
+
+        using alps::mcbase::load;
+        virtual void load(alps::hdf5::archive & ar);
+
+    private:
+        
+        int length;
+        int sweeps;
+        int thermalization_sweeps;
+        int total_sweeps;
+        double beta;
+        alps::uniform_on_sphere_n<N, double, std::vector<double> > random_spin_gen;
+        alps::graph_helper<> lattice;
+        std::vector<spintype> spins;
+};
+
+/* implementation */
+
+template<int N>
+ndim_spin_sim<N>::ndim_spin_sim(parameters_type const & parms, std::size_t seed_offset)
     : alps::mcbase(parms, seed_offset)
     , length(parameters["L"])
     , sweeps(0)
@@ -36,20 +86,23 @@ heisenberg_sim::heisenberg_sim(parameters_type const & parms, std::size_t seed_o
     ;
 }
 
-void heisenberg_sim::update() {
+//TODO make 3d
+template<int N>
+void ndim_spin_sim<N>::update() {
     for (int j = 0; j < lattice.num_sites(); ++j) {
         using std::exp;
         int i = int(double(lattice.num_sites()) * random());
         /* get a random site */
         alps::graph_helper<>::site_descriptor site_i = lattice.site(i);
         /* sum all neighbors */
-        spintype nn_sum = { {0, 0, 0} };
+        typename ndim_spin_sim<N>::spintype nn_sum;
+        nn_sum.initialize(0);
         alps::graph_helper<>::neighbor_iterator nn_it, nn_end;
         for(boost::tie(nn_it, nn_end) = lattice.neighbors(site_i); nn_it != nn_end; ++nn_it) {
             nn_sum += spins[*nn_it];
         }
         /* generate a new random spin for update and accept or not */
-        spintype new_spin = random_spin();
+        typename ndim_spin_sim<N>::spintype new_spin = random_spin();
         double delta_H = dot(new_spin - spins[i], nn_sum);
         double p = exp( -beta * delta_H );
         if ( p >= 1. || random() < p )
@@ -57,10 +110,12 @@ void heisenberg_sim::update() {
     }
 }
 
-void heisenberg_sim::measure() {
+template <int N>
+void ndim_spin_sim<N>::measure() {
     sweeps++;
     if (sweeps > thermalization_sweeps) {
-        spintype tmag = {{0, 0, 0}};
+        typename ndim_spin_sim<N>::spintype tmag;
+        tmag.initialize(0);
         double tmag_sq = 0; // for susceptibility
         double ten = 0;
         for (int i = 0; i < lattice.num_sites(); ++i) {
@@ -85,17 +140,20 @@ void heisenberg_sim::measure() {
     }
 }
 
-double heisenberg_sim::fraction_completed() const {
+template <int N>
+double ndim_spin_sim<N>::fraction_completed() const {
     return (sweeps < thermalization_sweeps ? 0. : ( sweeps - thermalization_sweeps ) / double(total_sweeps));
 }
 
-void heisenberg_sim::save(alps::hdf5::archive & ar) const {
+template <int N>
+void ndim_spin_sim<N>::save(alps::hdf5::archive & ar) const {
     mcbase::save(ar);
     ar["checkpoint/sweeps"] << sweeps;
     ar["checkpoint/spins"] << spins;
 }
 
-void heisenberg_sim::load(alps::hdf5::archive & ar) {
+template <int N>
+void ndim_spin_sim<N>::load(alps::hdf5::archive & ar) {
     mcbase::load(ar);
 
     length = int(parameters["L"]);
@@ -107,13 +165,15 @@ void heisenberg_sim::load(alps::hdf5::archive & ar) {
     ar["checkpoint/spins"] >> spins;
 }
 
-const spintype heisenberg_sim::random_spin() {
-    return spin_from_vector(random_spin_gen(random.engine()));
+template <int N>
+const typename ndim_spin_sim<N>::spintype ndim_spin_sim<N>::random_spin() {
+    return spin_from_vector<N>(random_spin_gen(random.engine()));
 }
 
-const spintype heisenberg_sim::random_spin_accept_reject() {
+template <int N>
+const typename ndim_spin_sim<N>::spintype ndim_spin_sim<N>::random_spin_accept_reject() {
     double r = 0;
-    spintype spin = { {0, 0, 0} };
+    typename ndim_spin_sim<N>::spintype spin;
     /* get a random vector from uniformly distributed numbers in [-1,1) */
     do 
     {
@@ -131,3 +191,5 @@ const spintype heisenberg_sim::random_spin_accept_reject() {
     } 
     return spin;
 }
+
+#endif 
