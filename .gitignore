@@ -7,3 +7,4 @@ build/
 alps-svn/
 *.in.xml
 ALPS.xsl
+*.pdf

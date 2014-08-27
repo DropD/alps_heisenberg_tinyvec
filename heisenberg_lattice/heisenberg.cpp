@@ -75,13 +75,13 @@ void heisenberg_sim::measure() {
         using alps::ngs::numeric::operator/;
         ten /= lattice.num_sites();
         tmag /= lattice.num_sites();
-        double tmag_sq_avg = tmag_sq / lattice.num_sites();
+        double tmag_sq_avg = tmag_sq / (lattice.num_sites() * lattice.num_sites());
         double tmag_avg_sq = dot(tmag, tmag);
         measurements["Energy"] << ten;
         measurements["Magnetization"] << vector_from_spintype(tmag);
         measurements["Magnetization^2"] << dot(tmag, tmag);
         measurements["Magnetization^4"] << dot(tmag, tmag) * dot(tmag, tmag);
-        measurements["Magnetic Susceptibility"] << beta * (tmag_sq_avg - tmag_avg_sq * lattice.num_sites());
+        measurements["Magnetic Susceptibility"] << beta * (tmag_sq_avg - tmag_avg_sq);
     }
 }
 
