@@ -14,3 +14,22 @@ enable_language(C CXX)
 # rule for generating single core ising program
 add_executable(single single.cpp)
 target_link_libraries(single ${ALPS_LIBRARIES})
+ 
+if (ALPS_HAVE_PYTHON)
+
+	# rule for generating python export
+	set_property(GLOBAL APPEND PROPERTY PY_MODULES_LIST ndsim_c)
+	if(BUILD_SHARED_LIBS)
+	    add_library(ndsim_c MODULE export.cpp)
+		set_target_properties(ndsim_c PROPERTIES COMPILE_DEFINITIONS "${ALPS_SHARED_CPPFLAGS}")
+		if(WIN32 AND NOT UNIX)
+			set_target_properties(ndsim_c PROPERTIES SUFFIX ".pyd")
+	    endif(WIN32 AND NOT UNIX)
+	else(BUILD_SHARED_LIBS)
+		set_property(GLOBAL APPEND PROPERTY PY_STATIC_MODULES_LIST ndsim_c)
+		add_library(ndsim_c STATIC export.cpp)
+	endif (BUILD_SHARED_LIBS)
+	set_target_properties(ndsim_c PROPERTIES PREFIX "")
+	target_link_libraries(ndsim_c ${ALPS_LIBRARIES})
+
+endif (ALPS_HAVE_PYTHON)
