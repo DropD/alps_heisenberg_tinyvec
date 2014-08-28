@@ -11,9 +11,13 @@ include(${ALPS_USE_FILE})
 # enable C and C++ compilers
 enable_language(C CXX)
 
-# rule for generating single core ising program
+# rule for generating single core heisenberg program
 add_executable(single single.cpp)
 target_link_libraries(single ${ALPS_LIBRARIES})
+
+# rule for generating single core o(4) program
+add_executable(single_4d single_4d.cpp)
+target_link_libraries(single_4d ${ALPS_LIBRARIES})
  
 if (ALPS_HAVE_PYTHON)
 

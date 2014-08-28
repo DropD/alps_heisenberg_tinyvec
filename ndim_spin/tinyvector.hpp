@@ -13,11 +13,26 @@
 #include <cmath>
 #include <iostream>
 
+struct even {};
+struct odd  {};
+
+template <int N>
+struct zerocomp { typedef odd even_or_odd; };
+
+template <>
+struct zerocomp<0> { typedef even even_or_odd; };
+
+template <int N> 
+struct integer { typedef zerocomp<N % 2> is; };
+
 template <int N>
 class tinyvector {
     public:
+        typename integer<N>::is::even_or_odd even_or_odd;
+
         inline const double operator[](int i) const { return _data[i]; };
         inline double & operator[](int i) { return _data[i]; };
+
         void initialize(double init) {
             for(int i = 0; i < N; ++i)
                 _data[i] = init;
@@ -32,11 +47,37 @@ class tinyvector {
         boost::array<double, N> _data;
 };
 
+template <int N, class evenodd>
+class tv_addinplace {
+    public:
+        static inline const tinyvector<N> & apply(tinyvector<N> &left, const tinyvector<N> &right);
+};
+
+template <int N>
+class tv_addinplace<N, odd> {
+    public:
+        static inline const tinyvector<N> & apply(tinyvector<N> &left, const tinyvector<N> &right) {
+            for(int i = 0; i < N; ++i)
+                left[i] += right[i];
+            return left;
+        }
+};
+
+template <int N> 
+class tv_addinplace<N, even> {
+    public:
+        static inline const tinyvector<N> & apply(tinyvector<N> &left, const tinyvector<N> &right) {
+            for(int i = 0; i < N/2; ++i) {
+                left[2*i]       += right[2*i];
+                left[2*i + 1]   += right[2*i + 1];
+            }
+            return left;
+        }
+};
+
 template <int N>
 inline const tinyvector<N> & operator+=(tinyvector<N> &left, const tinyvector<N> &right) {
-    for(int i = 0; i < N; ++i)
-        left[i] += right[i];
-    return left;
+    return tv_addinplace<N, typename integer<N>::is::even_or_odd>::apply(left, right);
 }
 
 template <int N>
