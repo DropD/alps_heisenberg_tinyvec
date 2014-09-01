@@ -4,6 +4,7 @@
 *.swo
 *.h5
 build/
+build*/
 alps-svn/
 *.in.xml
 ALPS.xsl
