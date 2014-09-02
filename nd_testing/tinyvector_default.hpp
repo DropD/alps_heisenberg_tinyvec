@@ -25,7 +25,10 @@ class tinyvector {
         }
 
         const double * data() const { return _data.data(); }
-        double * data() { return _data.data(); }
+        double * data() { return _data.c_array(); }
+
+        const double & front() const { return _data.front(); }
+        double & front() {return _data.front(); }
 
         inline const double operator[](int i) const { return _data[i]; };
         inline double & operator[](int i) { return _data[i]; };
