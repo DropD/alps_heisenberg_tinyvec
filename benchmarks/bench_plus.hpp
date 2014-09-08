@@ -86,7 +86,7 @@ class tv_benchmarker {
     private:
         std::vector<tinivec> data;
         alps::random01 r01;
-        alps::uniform_on_sphere_n<N, double, tinivec> __attribute__((aligned(4 * sizeof(double)))) vgen;
+        alps::uniform_on_sphere_n<N, double, tinivec> vgen;
         tinivec _result, _error;
 };
 

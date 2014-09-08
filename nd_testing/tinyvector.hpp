@@ -22,6 +22,7 @@
 #ifdef __AVX__
 #include "tinyvector_oe4_avx.hpp"
 #include "tinyvector_unroll_avx.hpp"
+#include "tinyvector_ultimate.hpp"
 #else
 #endif
 

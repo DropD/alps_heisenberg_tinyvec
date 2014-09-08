@@ -74,7 +74,7 @@ endif()
 set(temp "${temp} ${bench_flags}")
 set_target_properties(pb_uh_native PROPERTIES COMPILE_FLAGS ${temp})
 
-## hand unroll
+## hand unrolled vectorized
 ### no march=native
 ### does not compile, obviously
 # add_executable(pb_uv_i386 bench_run_urv.cpp)
@@ -106,4 +106,20 @@ else()
 endif()
 set(temp "${temp} ${bench_flags}")
 set_target_properties(verify PROPERTIES COMPILE_FLAGS ${temp})
+
+#---------- template unrolled vectorized ----------
+  
+## pb_tv_native vectorization result
+add_executable(pb_tv_native bench_run_tv.cpp)
+target_link_libraries(pb_tv_native ${ALPS_LIBRARIES})
+ 
+### with march=native
+get_target_property(temp pb_tv_native COMPILE_FLAGS)
+if(temp STREQUAL "temp-NOTFOUND")
+    set(temp "")
+else()
+    set(temp "${temp}")
+endif()
+set(temp "${temp} ${bench_flags}")
+set_target_properties(pb_tv_native PROPERTIES COMPILE_FLAGS ${temp})
                                                
