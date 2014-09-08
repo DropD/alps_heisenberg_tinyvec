@@ -129,7 +129,7 @@ plt.legend(loc = 'best')
 fpl.xlabel('size')
 fpl.ylabel('speedup')
 fpl.title(r'speedup template vs hand (should be 1)')
-plt.savefig('hvt_speedup.pdf')
+plt.savefig('svt_speedup.pdf')
  
 
 
