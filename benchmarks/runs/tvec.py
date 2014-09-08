@@ -16,7 +16,7 @@ if 'make' in sys.argv:
     bdir = ['../build-d/', '../build-rwd/', '../build-r/']
     for i in range(len(bdir)):
         sp.check_call(['make', '-C', bdir[i], 'rebuild_cache'])
-        sp.check_call(['make', '-C', bdir[i], 'pb_uv_native', 'pb_tv_native'])
+        sp.check_call(['make', '-C', bdir[i], 'pb_uv_native', 'pb_tv_native', 'pb_no_native'])
     print 'build phase ended'
 
 if 'run' in sys.argv:
@@ -31,6 +31,8 @@ if 'run' in sys.argv:
 
         if '_uv_' in r: popt = 'uv'
         elif '_tv_' in r: popt = 'tv'
+        elif '_no_' in r: popt = 'no'
+        else: raise Exception('no suitable program found')
 
         if 'i386' in r: pname = 'pb_{}_i386'.format(popt)
         elif 'native' in r: pname = 'pb_{}_native'.format(popt)
@@ -43,10 +45,11 @@ results = {runs[i] : dio.read(result_files[i]) for i in range(len(runs))}
 
 x = results[runs[0]][:,0]
 
-#----------------------- simple vs template vectorized -------------------------------
-
 yn = results['r_no_native'][:,1:]
+yh = results['r_uv_native'][:,1:]
 yt = results['r_tv_native'][:,1:]
+
+#----------------------- simple vs template vectorized -------------------------------
 
 plt.figure()
 plt.plot(x, yn[:, 0], label =  '2D hand', color = 'b', ls = '-')
@@ -70,8 +73,6 @@ fpl.title(r'simple vs template unrolled vectorized \\ Release flags')
 plt.savefig('svt_runtime.pdf')
  
 #----------------------- hand vectorized vs template vectorized -------------------------------
-
-yh = results['r_uv_native'][:,1:]
 
 plt.figure()
 plt.plot(x, yh[:, 0], label =  '2D hand', color = 'b', ls = '-')

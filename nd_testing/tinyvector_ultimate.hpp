@@ -96,4 +96,70 @@ inline const tinyvector<N, TVEC> & operator+=(tinyvector<N, TVEC> &left, const t
     return left;
 }
 
+template <int N, int M>
+class MINUS {
+    public:
+        static inline const void apply(tinyvector<N, TVEC> &left, const tinyvector<N, TVEC> &right, const int start) {
+            MINUS<N, 4>::apply(left, right, start);
+            MINUS<N, M-4>::apply(left, right, start + 4);
+        }
+};
+
+template <int N>
+class MINUS<N, 0> {
+    public:
+        static inline const void apply(tinyvector<N, TVEC> &left, const tinyvector<N, TVEC> &right, const int start) {}
+};
+
+template <int N> 
+class MINUS<N, 1> {
+    public:
+        static inline const void apply(tinyvector<N, TVEC> &left, const tinyvector<N, TVEC> &right, const int start) {
+            left[start] -= right[start];
+        }
+};
+
+template <int N> 
+class MINUS<N, 2> {
+    public:
+        static inline const void apply(tinyvector<N, TVEC> &left, const tinyvector<N, TVEC> &right, const int start) {
+            double * l = left.data();
+            const double * r = right.data();
+            __m128 mml, mmr, mms;
+            mml = _mm_load_pd(l + start);
+            mmr = _mm_load_pd(r + start);
+            mms = _mm_sub_pd(mml, mmr);
+            _mm_store_pd(l + start, mms);
+        }
+};
+
+template <int N> 
+class MINUS<N, 3> {
+    public:
+        static inline const void apply(tinyvector<N, TVEC> &left, const tinyvector<N, TVEC> &right, const int start) {
+            MINUS<N, 2>::apply(left, right, start);
+            left[start + 2] -= right[start + 2];
+        }
+};
+
+template <int N> 
+class MINUS<N, 4> {
+    public:
+        static inline const void apply(tinyvector<N, TVEC> &left, const tinyvector<N, TVEC> &right, const int start) {
+            double * l = left.data();
+            const double * r = right.data();
+            __m256 mml, mmr, mms;
+            mml = _mm256_load_pd(l + start);
+            mmr = _mm256_load_pd(r + start);
+            mms = _mm256_sub_pd(mml, mmr);
+            _mm256_store_pd(l + start, mms); 
+        }
+};
+
+template <int N>
+inline const tinyvector<N, TVEC> & operator-=(tinyvector<N, TVEC> &left, const tinyvector<N, TVEC> &right) {
+    tv_inplace_tvec<N, MINUS>::apply(left, right, 0);
+    return left;
+}
+ 
 #endif
