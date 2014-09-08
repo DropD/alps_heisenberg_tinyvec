@@ -2,21 +2,12 @@
 #define MULTIPLE_OF_HPP
 
 struct one {};
-struct two{};
+struct two {};
 struct four {};
-//~ 
-//~ template <int N>
-//~ struct one_or_two_ { typedef one value; };
-//~ 
-//~ template <>
-//~ struct one_or_two_<0> { typedef two value; };
-//~ 
-//~ template <int N>
-//~ struct two_or_four_ { typedef two value; };
-//~ 
-//~ template <>
-//~ struct two_or_four_<0> { typedef four value; };
-//~ 
+
+struct false_t {};
+struct true_t  {};
+
 template <int N, int mod>
 struct one_or_two_or_four_ { typedef one value; };
 
@@ -30,5 +21,24 @@ template <int N>
 struct multiple_of { 
     typedef typename one_or_two_or_four_<N, N % 4>::value divisor; 
 }; 
+
+/* get multiple of 16 and mod */
+template <int N>
+struct is_zero { typedef false_t value; };
+
+template <>
+struct is_zero<0> { typedef true_t value; };
+
+template <int N>
+struct zero_or_one { static const int value = 1; };
+
+template<>
+struct zero_or_one<0> { static const int value = 0; };
+
+template <int N>
+struct unroll_16 { 
+    static const int iter = N / 16 - zero_or_one<N % 16>::value; 
+    static const int leftover = N % 16;
+};
 
 #endif

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 project(ndim_spin NONE)
 
-set(ALPS_ROOT_DIR /Users/ricoh/Applications/alps)
+set(ALPS_ROOT_DIR /opt/alps)
 
 # find ALPS Library
 find_package(ALPS REQUIRED PATHS ${ALPS_ROOT_DIR} $ENV{ALPS_HOME} NO_SYSTEM_ENVIRONMENT_PATH)

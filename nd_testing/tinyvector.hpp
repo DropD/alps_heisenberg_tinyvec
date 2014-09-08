@@ -16,6 +16,13 @@
 #include "tinyvector_oe.hpp"
 #include "tinyvector_oe4.hpp"
 #include "tinyvector_oe_sse.hpp"
-//~ #include "tinyvector_oe4_avx.hpp"
+#include "tinyvector_unroll.hpp"
+#include "tinyvector_unroll_man.hpp"
+
+#ifdef __AVX__
+#include "tinyvector_oe4_avx.hpp"
+#include "tinyvector_unroll_avx.hpp"
+#else
+#endif
 
 #endif

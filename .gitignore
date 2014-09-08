@@ -9,3 +9,5 @@ alps-svn/
 *.in.xml
 ALPS.xsl
 *.pdf
+*.dat
+*.trace

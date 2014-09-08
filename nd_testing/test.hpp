@@ -13,6 +13,36 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
+
+template<int N, class Opt>
+void get_random_tv(std::vector<tinyvector<N, Opt> > & rtv) {
+    alps::uniform_on_sphere_n <N, double, std::vector<double> > vgen;
+    alps::random01 r01;
+
+    for(int i = 0; i < rtv.size(); ++i)
+        rtv[i] = vgen(r01.engine());
+}
+
+template<int N, class Opt>
+tinyvector<N, Opt> microbench_plus(std::vector<tinyvector<N, Opt> > & rtv) {
+    tinyvector<N, Opt> sum;
+    for(int j = 0; j < 100000; ++j) {
+        for(int i = 0; i < rtv.size(); ++i)
+            sum += rtv[i];
+    }
+    return sum;
+}
+
+template<int N, class Opt>
+int run_bench_plus(int M) {
+    std::vector<tinyvector<N, Opt> > random_tv(M);
+    get_random_tv(random_tv);
+
+    std::cout << microbench_plus(random_tv) << std::endl;
+    std::cout << "done." << std::endl;
+    return 0;
+}
 
 
 template<int N, class Opt>
