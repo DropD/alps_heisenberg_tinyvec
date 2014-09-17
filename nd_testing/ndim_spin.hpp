@@ -52,7 +52,7 @@ class ALPS_DECL ndim_spin_sim : public alps::mcbase {
         int thermalization_sweeps;
         int total_sweeps;
         double beta;
-        alps::uniform_on_sphere_n<N, double, spintype > random_spin_gen;
+        tvec_random_on_sphere<N, spintype> random_spin_gen;
         alps::graph_helper<> lattice;
         std::vector<spintype> spins;
 };

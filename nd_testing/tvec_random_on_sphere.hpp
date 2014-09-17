@@ -1,32 +1,16 @@
 #ifndef TVEC_RANDOM_ON_SPHERE_HPP
 #define TVEC_RANDOM_ON_SPHERE_HPP
 
-#ifndef PI
-#define PI 3.1415926
-#endif
+#include <boost/array.hpp>
 
-template<int N, class VEC, class ENGINE>
-class tvec_random_on_sphere {
-    tvec_random_on_sphere(ENGINE & eng) : _eng(eng), _buffer(16) {}
-    VEC operator()() {
-        VEC random_vector;
-        tv_ros_impl<N>(random_vector, _eng, 0);
-        return random_vector;
-    }
-    private:
-        ENGINE & _eng;
-        std::vector<double> _buffer;
-}
+static const double pi = 3.1415926;
 
 template <int N>
 struct tv_ros_impl {
     template<class VEC, class ENGINE>
-    static void inline normals(VEC &vector, ENGINE &eng, const int &index) {
-        tv_ros_impl<8>(vector, eng, index);
-        tv_ros_impl<N-8>(vector, eng, index + 8);
-    }
+    static void inline normals(VEC &vector, ENGINE &eng, const int &index) { }
 };
-
+ 
 template <>
 struct tv_ros_impl<8> {
     template<class VEC, class ENGINE>
@@ -36,10 +20,10 @@ struct tv_ros_impl<8> {
         __m256 mmx, mmy;
 
         double a, b, c, d, e, f, g, h;
-        a = 2 * eng() - 1; e = 2 * PI * (2 * eng() - 1);
-        b = 2 * eng() - 1; f = 2 * PI * (2 * eng() - 1);
-        c = 2 * eng() - 1; g = 2 * PI * (2 * eng() - 1);
-        d = 2 * eng() - 1; h = 2 * PI * (2 * eng() - 1);
+        a = 2 * eng() - 1; e = 2 * pi * (2 * eng() - 1);
+        b = 2 * eng() - 1; f = 2 * pi * (2 * eng() - 1);
+        c = 2 * eng() - 1; g = 2 * pi * (2 * eng() - 1);
+        d = 2 * eng() - 1; h = 2 * pi * (2 * eng() - 1);
 
         mmu = _mm256_set_pd(a, b, c, d);
         mmv = _mm256_set_pd(e, f, g, h);
@@ -60,5 +44,49 @@ struct tv_ros_impl<8> {
     } 
 };
 
+template <>
+struct tv_ros_impl<16> {
+    template<class VEC, class ENGINE>
+    static void inline normals(VEC &vector, ENGINE &eng, const int &index) {
+        tv_ros_impl<8>::normals(vector, eng, index);
+        tv_ros_impl<8>::normals(vector, eng, index + 8);
+    }
+};
+ 
+template<int N, class VEC>
+class tvec_random_on_sphere {
+
+    public:
+        tvec_random_on_sphere() : _cursor(16) { }
+
+        template<class ENGINE>
+        VEC operator()(ENGINE & eng) {
+            VEC random_vector;
+            for(int i = 0; i < N; ++i) {
+                random_vector[i] = get_buffered(eng);
+            }
+            return random_vector;
+        }
+
+        template<class ENGINE>
+        void refresh(ENGINE & eng) {
+            tv_ros_impl<16>::normals(_buffer, eng, 0); 
+            _cursor = 0;
+        }
+
+        template<class ENGINE>
+        double get_buffered(ENGINE & eng) {
+            if (_cursor >= 16) {
+                refresh(eng);
+            }
+            double normal = _buffer[_cursor];
+            ++_cursor;
+            return normal;
+        }
+
+    private:
+        boost::array<double, 16> _buffer __attribute__((aligned(16 * sizeof(double))));
+        int _cursor;
+};
 
 #endif
