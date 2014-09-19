@@ -16,7 +16,7 @@ struct tv_ros_impl {
     template<class VEC, class ENGINE>
     static void inline normals(VEC &vector, ENGINE &eng, const int &index) {}
 };
-
+ 
 template <>
 struct tv_ros_impl<8> {
     template<class VEC, class ENGINE>

@@ -4,7 +4,6 @@
 #ifndef TINYVECTOR_HPP
 #define TINYVECTOR_HPP
 
-
 #include <boost/array.hpp>
 #include <alps/hdf5.hpp>
 
@@ -23,6 +22,7 @@
 #include "tinyvector_oe4_avx.hpp"
 #include "tinyvector_unroll_avx.hpp"
 #include "tinyvector_ultimate.hpp"
+#include "tvec_random_on_sphere.hpp"
 #else
 #endif
 
