@@ -52,7 +52,7 @@ class ALPS_DECL ndim_spin_sim : public alps::mcbase {
         int thermalization_sweeps;
         int total_sweeps;
         double beta;
-        alps::uniform_on_sphere_n<N, double, std::vector<double> > random_spin_gen;
+        alps::uniform_on_sphere_n<N, double, spintype > random_spin_gen;
         alps::graph_helper<> lattice;
         std::vector<spintype> spins;
 };
@@ -167,7 +167,7 @@ void ndim_spin_sim<N>::load(alps::hdf5::archive & ar) {
 
 template <int N>
 const typename ndim_spin_sim<N>::spintype ndim_spin_sim<N>::random_spin() {
-    return spin_from_vector<N>(random_spin_gen(random.engine()));
+    return random_spin_gen(random.engine());
 }
 
 template <int N>

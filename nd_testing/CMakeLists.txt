@@ -108,3 +108,6 @@ set_target_properties(prof_g3_s4_unroll_avx PROPERTIES COMPILE_FLAGS ${temp})
 #	target_link_libraries(ndsim_c ${ALPS_LIBRARIES})
 #
 #endif (ALPS_HAVE_PYTHON)
+
+add_executable(test_avx_math test_avx_math.cpp)
+set_target_properties(test_avx_math PROPERTIES COMPILE_FLAGS "-march=native")

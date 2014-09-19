@@ -6,6 +6,7 @@
 #define HEISENBERG_HPP
 
 #include "tinyvector.hpp"
+#include "tvec_random_on_sphere.hpp"
 
 #include <alps/mcbase.hpp>
 #include <alps/ngs/numeric.hpp>
