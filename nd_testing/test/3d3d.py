@@ -11,7 +11,7 @@ if __name__ == '__main__':
     sim = ndsim.heisenberg_sim(pyalps.ngs.params({
         'LATTICE_LIBRARY'   :   '/opt/alps/lib/xml/lattices.xml',
         'LATTICE'           :   'simple cubic lattice',
-        'L'                 :   '20',
+        'L'                 :   '10',
         'THERMALIZATION'    :   '1000',
         'SWEEPS'            :   '100000',
         'T'                 :   '2'

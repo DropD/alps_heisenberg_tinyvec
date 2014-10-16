@@ -11,6 +11,9 @@ include(${ALPS_USE_FILE})
 # enable C and C++ compilers
 enable_language(C CXX)
 
+set(bench_flags "-march=native -mavx") 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${bench_flags}")
+
 # rule for generating single core heisenberg program
 add_executable(single single.cpp)
 target_link_libraries(single ${ALPS_LIBRARIES})
