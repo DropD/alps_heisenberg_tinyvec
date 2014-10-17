@@ -8,9 +8,11 @@
  */
 #ifdef __AVX__
     #define STEP = 4
+struct INTRIN_OPT {};
 #else
     #ifdef __SSE2__
         #define STEP = 2
+struct INTRIN_OPT {};
     #else
         #define STEP = 1
     #endif
@@ -19,13 +21,19 @@
 /**
  * recursively call binary operator kernels 
  */
-template <class OP, int N>
+template <class OP, int N, int M>
 struct _vectorize {
-    template <class vec>
-    static inline const void apply(vec & left, const vec & right, const int start) {
+    static inline const void apply(tinyvector<double, M, INTRIN_OPT> & left, const vec & right, const int start) {
         _vectorize<OP, STEP>::apply(left, right, start);
         _vectorize<OP, N - STEP>::apply(left, right, start + STEP);
     }
+};
+
+template <class OP>
+struct _vectorize<OP, 0>
+{
+    template <class vec>
+    static inline const void apply(vec & left, const vec & right, const int start) { }
 };
 
 template <class OP>

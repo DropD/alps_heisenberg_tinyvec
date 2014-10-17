@@ -1,8 +1,10 @@
-/* helper.hpp for ndim_spin example
+/* tinyvector_default.hpp
+ *
+ * contains the default implementation
  */
 
-#ifndef HEISENBERG_HELPER_HPP
-#define HEISENBERG_HELPER_HPP
+#ifndef TINYVECTOR_DEFAULT_HPP
+#define TINYVECTOR_DEFAULT_HPP
 
 //~ #include "ndim_spin.hpp"
 
@@ -13,7 +15,9 @@
 #include <cmath>
 #include <iostream>
 
-template <int N>
+struct NO_OPT {};
+
+template <int N, class Opt = NO_OPT>
 class tinyvector {
     public:
         typedef typename boost::array<double, N> data_type;
@@ -46,6 +50,14 @@ class tinyvector {
             for(int i = 0; i < N; ++i)
                 _data[i] = init;
         }
+
+        static inline const std::vector<double> vector(const tinyvector<N, Opt> & tv){
+            std::vector<double> result;
+            for(int i = 0; i < N; ++i)
+                result.push_back(tv[i]);
+            return result;
+        }
+
         void save(alps::hdf5::archive & ar) const {
             ar << alps::make_pvp("data", _data);
         }
@@ -56,108 +68,92 @@ class tinyvector {
         boost::array<double, N> _data __attribute__((aligned(16 * sizeof(double))));
 };
 
-template <int N>
-inline const tinyvector<N> & operator+=(tinyvector<N> &left, const tinyvector<N> &right) {
+template <int N, class Opt>
+inline const tinyvector<N, Opt> & operator+=(tinyvector<N, Opt> &left, const tinyvector<N, Opt> &right) {
     for(int i = 0; i < N; ++i)
         left[i] += right[i];
     return left;
-}
+};
 
-template <int N>
-inline const tinyvector<N> & operator-=(tinyvector<N> &left, const tinyvector<N> &right) {
+template <int N, class Opt>
+inline const tinyvector<N, Opt> & operator-=(tinyvector<N, Opt> &left, const tinyvector<N, Opt> &right) {
     for(int i = 0; i < N; ++i)
         left[i] -= right[i];
     return left;
 }
 
-template <int N>
-inline const tinyvector<N> & operator*=(tinyvector<N> &left, double right) {
+template <int N, class Opt>
+inline const tinyvector<N, Opt> & operator*=(tinyvector<N, Opt> &left, double right) {
     for(int i = 0; i < N; ++i)
         left[i] *= right;
     return left;
 }
 
-template <int N>
-inline const tinyvector<N> & operator/=(tinyvector<N> &left, double right) {
+template <int N, class Opt>
+inline const tinyvector<N, Opt> & operator/=(tinyvector<N, Opt> &left, double right) {
     for(int i = 0; i < N; ++i)
         left[i] /= right;
     return left;
 }
 
-template <int N>
-inline const tinyvector<N> operator+(const tinyvector<N> &left, const tinyvector<N> &right) {
-    tinyvector<N> result(left);
+template <int N, class Opt>
+inline const tinyvector<N, Opt> operator+(const tinyvector<N, Opt> &left, const tinyvector<N, Opt> &right) {
+    tinyvector<N, Opt> result(left);
     return result += right;
 }
 
-template <int N>
-inline const tinyvector<N> operator-(const tinyvector<N> &left, const tinyvector<N> &right) {
-    tinyvector<N> result(left);
+template <int N, class Opt>
+inline const tinyvector<N, Opt> operator-(const tinyvector<N, Opt> &left, const tinyvector<N, Opt> &right) {
+    tinyvector<N, Opt> result(left);
     return result -= right;
 }
 
-template <int N>
-inline const tinyvector<N> operator-(const tinyvector<N> &spin) {
-    tinyvector<N> result;
+template <int N, class Opt>
+inline const tinyvector<N, Opt> operator-(const tinyvector<N, Opt> &spin) {
+    tinyvector<N, Opt> result;
     for(int i = 0; i < N; ++i)
         result[i] = - spin[i];
     return result;
 }
 
-template <int N>
-inline const tinyvector<N> operator*(const tinyvector<N> &left, double right) {
-    tinyvector<N> result(left);
+template <int N, class Opt>
+inline const tinyvector<N, Opt> operator*(const tinyvector<N, Opt> &left, double right) {
+    tinyvector<N, Opt> result(left);
     return result *= right;
 }
 
-template <int N>
-inline const tinyvector<N> operator*(double left, const tinyvector<N> &right) {
+template <int N, class Opt>
+inline const tinyvector<N, Opt> operator*(double left, const tinyvector<N, Opt> &right) {
     return right * left;
 }
 
-template <int N>
-inline const tinyvector<N> operator/(const tinyvector<N> &left, double right) {
-    tinyvector<N> result(left);
+template <int N, class Opt>
+inline const tinyvector<N, Opt> operator/(const tinyvector<N, Opt> &left, double right) {
+    tinyvector<N, Opt> result(left);
     return result /= right;
 }
 
-template <int N>
-double dot(const tinyvector<N> &left, const tinyvector<N> &right) {
+template <int N, class Opt>
+double dot(const tinyvector<N, Opt> &left, const tinyvector<N, Opt> &right) {
     double result = 0.;
     for(int i = 0; i < N; ++i)
         result += left[i] * right[i];
     return result;
 }
 
-template <int N>
-double abs(const tinyvector<N> &spin) {
+template <int N, class Opt>
+double abs(const tinyvector<N, Opt> &spin) {
    return std::sqrt(dot(spin, spin));
 }
 
-template <int N>
-std::ostream& operator<<(std::ostream& os, const tinyvector<N>& spin)
+template <int N, class Opt>
+std::ostream& operator<<(std::ostream& os, const tinyvector<N, Opt>& spin)
 {
     os << "[ ";
     for(int i = 0; i < N; ++i)
         os << spin[i] << " ";
     os << " ]";
     return os;
-}
-
-template <int N>
-inline const std::vector<double> vector_from_tinyvector(const tinyvector<N> &spin) {
-    std::vector<double> result;
-    for(int i = 0; i < N; ++i)
-        result.push_back(spin[i]);
-    return result;
-}
-
-template <int N>
-inline const tinyvector<N> spin_from_vector(const std::vector<double> &vec) {
-    tinyvector<N> result;
-    for(int i = 0; i < N; ++i)
-        result[i] = vec[i];
-    return result;
 }
 
 #endif
