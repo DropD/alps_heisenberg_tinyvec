@@ -3,6 +3,10 @@ sys.path.append('/opt/alps/lib')
 import pyalps
 from matplotlib import pyplot as plt
 import numpy as np
+#~ sys.path.append('/Users/ricoh/Prog/python/mdebug/')
+#~ from mdebug import mdebug
+#~ from analyzer import name_analyzer
+#~ DBG = mdebug(analyzer = name_analyzer())
 
 def h5get(ar, meas):
     base_path = 'simulation/results/{}/mean'.format(meas)
@@ -15,7 +19,7 @@ parameter_files = ['param.txt.task{}.in.xml'.format(i) for i in range(1, NUM_RUN
 result_files    = ['param.txt.task{}.in.out.h5'.format(i) for i in range(1, NUM_RUNS + 1)]
 h5_T_path       = 'parameters/T'
 h5_L_path       = 'parameters/L'
-program         = '../../build/single'
+program         = '../../build-release/single'
 plot_file       = 'mag_sus.pdf'
 
 if __name__ == '__main__':
@@ -33,14 +37,14 @@ if __name__ == '__main__':
 
         for run in range(NUM_RUNS):
             ar  = pyalps.hdf5.iArchive(result_files[run])
-            T   = ar[h5_T_path]
-            L   = ar[h5_L_path]
+            T   = float(ar[h5_T_path])
+            L   = float(ar[h5_L_path])
             m   = h5get(ar, 'Magnetization')
             m2  = h5get(ar, 'Magnetization^2')
 
             beta = 1. / T
             V = L * L * L
-            mm = m*m
+            mm = [np.dot(m[i,:], m[i,:]) for i in [0,1]]
             chi = beta * V * (m2 - mm)
 
             y.append(chi[0])
