@@ -59,7 +59,7 @@ struct _vectorize<Op, 2>
     static inline const void apply(vec & left, const vec & right, const int start) {
         double * l = left.data();
         const double * r = right.data();
-        __m128 mml, mmr, mms;
+        __m128d mml, mmr, mms;
         mml = _mm_load_pd(l + start);
         mmr = _mm_load_pd(r + start);
         mms = Op::apply(mml, mmr);
@@ -88,7 +88,7 @@ struct _vectorize<Op, 4>
     static inline const void apply(vec & left, const vec & right, const int start) {
         double * l = left.data();
         const double * r = right.data();
-        __m256 mml, mmr, mms;
+        __m256d mml, mmr, mms;
         mml = _mm256_load_pd(l + start);
         mmr = _mm256_load_pd(r + start);
         mms = Op::apply(mml, mmr);
@@ -109,12 +109,12 @@ struct _plus
         left[start] += right[start];
     }
 #ifdef __SSE2__
-    static inline const __m128 apply(__m128 & mml, __m128 & mmr) {
+    static inline const __m128d apply(__m128d & mml, __m128d & mmr) {
         return _mm_add_pd(mml, mmr);
     }
 #endif
 #ifdef __AVX__
-    static inline const __m256 apply(__m256 & mml, __m256 & mmr) {
+    static inline const __m256d apply(__m256d & mml, __m256d & mmr) {
         return _mm256_add_pd(mml, mmr);
     }
 #endif
@@ -131,12 +131,12 @@ struct _minus
         left[start] -= right[start];
     }
 #ifdef __SSE2__
-    static inline const __m128 apply(__m128 & mml, __m128 & mmr) {
+    static inline const __m128d apply(__m128d & mml, __m128d & mmr) {
         return _mm_sub_pd(mml, mmr);
     }
 #endif
 #ifdef __AVX__
-    static inline const __m256 apply(__m256 & mml, __m256 & mmr) {
+    static inline const __m256d apply(__m256d & mml, __m256d & mmr) {
         return _mm256_sub_pd(mml, mmr);
     }
 #endif
@@ -153,12 +153,12 @@ struct _multiply
         left[start] *= right[start];
     }
 #ifdef __SSE2__
-    static inline const __m128 apply(__m128 & mml, __m128 & mmr) {
+    static inline const __m128d apply(__m128d & mml, __m128d & mmr) {
         return _mm_mul_pd(mml, mmr);
     }
 #endif
 #ifdef __AVX__
-    static inline const __m256 apply(__m256 & mml, __m256 & mmr) {
+    static inline const __m256d apply(__m256d & mml, __m256d & mmr) {
         return _mm256_mul_pd(mml, mmr);
     }
 #endif
@@ -175,12 +175,12 @@ struct _divide
         left[start] /= right[start];
     }
 #ifdef __SSE2__
-    static inline const __m128 apply(__m128 & mml, __m128 & mmr) {
+    static inline const __m128d apply(__m128d & mml, __m128d & mmr) {
         return _mm_div_pd(mml, mmr);
     }
 #endif
 #ifdef __AVX__
-    static inline const __m256 apply(__m256 & mml, __m256 & mmr) {
+    static inline const __m256d apply(__m256d & mml, __m256d & mmr) {
         return _mm256_div_pd(mml, mmr);
     }
 #endif
