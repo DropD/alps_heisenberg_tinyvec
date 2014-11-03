@@ -81,9 +81,23 @@ inline const tinyvector<T, N, Opt> & operator-=(tinyvector<T, N, Opt> &left, con
 }
 
 template <class T, int N, class Opt>
+inline const tinyvector<T, N, Opt> & operator*=(tinyvector<T, N, Opt> &left, const tinyvector<T, N, Opt> &right) {
+    for(int i = 0; i < N; ++i)
+        left[i] *= right[i];
+    return left;
+}
+
+template <class T, int N, class Opt>
 inline const tinyvector<T, N, Opt> & operator*=(tinyvector<T, N, Opt> &left, T right) {
     for(int i = 0; i < N; ++i)
         left[i] *= right;
+    return left;
+}
+
+template <class T, int N, class Opt>
+inline const tinyvector<T, N, Opt> & operator/=(tinyvector<T, N, Opt> &left, const tinyvector<T, N, Opt> &right) {
+    for(int i = 0; i < N; ++i)
+        left[i] /= right[i];
     return left;
 }
 

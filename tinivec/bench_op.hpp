@@ -8,11 +8,8 @@
 #include <string>
 
 template<class OP>
-void bench_run(std::string output)
+void bench_op(std::string output)
 {
-    if(argc > 1)
-        output = argv[1];
-
     std::ofstream fout;
     fout.open(output.c_str());
 
@@ -81,8 +78,6 @@ void bench_run(std::string output)
     }
 
     fout.close();
-
-    return 0;
 }
 
 #endif

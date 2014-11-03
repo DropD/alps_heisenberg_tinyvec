@@ -3,7 +3,7 @@
 
 int main(int argc, char const *argv[])
 {
-    bench_op<_plus>("bm_plus.dat");
+    bench_op<_plus>("res_plus.txt");
 
     return 0;
 }

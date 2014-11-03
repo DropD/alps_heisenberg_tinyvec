@@ -3,7 +3,7 @@
 
 int main(int argc, char const *argv[])
 {
-    bench_op<_divide>("bm_divide.dat");
+    bench_op<_divide>("res_divide.txt");
 
     return 0;
 }
