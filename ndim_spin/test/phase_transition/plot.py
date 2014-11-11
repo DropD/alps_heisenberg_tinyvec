@@ -14,13 +14,14 @@ def h5get(ar, meas):
     err = base_path + '/error'
     return np.array((ar[val], ar[err]))
 
-NUM_RUNS = 12
+NUM_RUNS = 13
 parameter_files = ['param.txt.task{}.in.xml'.format(i) for i in range(1, NUM_RUNS + 1)]
 result_files    = ['param.txt.task{}.in.out.h5'.format(i) for i in range(1, NUM_RUNS + 1)]
 h5_T_path       = 'parameters/T'
 h5_L_path       = 'parameters/L'
 program         = '../../build-release/single'
 plot_file       = 'mag_sus.pdf'
+corr_file       = 'corr.pdf'
 
 if __name__ == '__main__':
     if 'run' in sys.argv:
@@ -51,8 +52,20 @@ if __name__ == '__main__':
             y_err.append(chi[1])
             x.append(T)
 
-        plt.plot(x, y)
+        x = np.array(x)
+        y = np.array(y)
+        y_err = np.array(y_err)
+
+        plt.figure()
+        plt.fill_between(x, y+y_err, y-y_err)
         plt.xlabel(r'$\frac{T}{K}$')
         plt.ylabel(r'$\chi$')
         plt.savefig(plot_file)
         subprocess32.call(['open', plot_file])
+
+        plt.figure()
+        corr = h5get(ar, 'Correlations')
+        dist = h5get(ar, 'Distances')
+        plt.plot(dist[0], corr[0], 'x')
+        plt.savefig(corr_file)
+        subprocess32.call(['open', corr_file])

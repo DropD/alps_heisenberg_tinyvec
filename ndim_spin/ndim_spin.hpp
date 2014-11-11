@@ -59,6 +59,7 @@ class ALPS_DECL ndim_spin_sim : public alps::mcbase {
         alps::uniform_on_sphere_n<N, double, spintype > random_spin_gen;
         alps::graph_helper<> lattice;
         std::vector<spintype> spins;
+        std::vector<double> dist;
 };
 
 /* implementation */
@@ -87,7 +88,20 @@ ndim_spin_sim<N>::ndim_spin_sim(parameters_type const & parms, std::size_t seed_
         << alps::accumulator::RealObservable("Magnetization^2")
         << alps::accumulator::RealObservable("Magnetization^4")
         << alps::accumulator::RealVectorObservable("Correlations")
+        << alps::accumulator::RealVectorObservable("Distances")
     ;
+
+    using alps::ngs::numeric::operator-;
+    std::vector<double> ref = lattice.coordinate(0);
+    std::vector<double> a;
+    for (int i = 0; i < lattice.num_sites(); ++i) {
+        double d = 0;
+        a = lattice.coordinate(i) - ref;
+        for (int j = 0; j < a.size(); ++j) {
+            d += a[j] * a[j];
+        }
+        dist.push_back(std::sqrt(d));
+    }
 }
 
 template<int N>
@@ -144,6 +158,7 @@ void ndim_spin_sim<N>::measure() {
         measurements["Magnetization^2"] << tmag2;
         measurements["Magnetization^4"] << tmag2 * tmag2;
         measurements["Correlations"] << corr;
+        measurements["Distances"] << dist;
     }
 }
 
@@ -157,6 +172,7 @@ void ndim_spin_sim<N>::save(alps::hdf5::archive & ar) const {
     mcbase::save(ar);
     ar["checkpoint/sweeps"] << sweeps;
     ar["checkpoint/spins"] << spins;
+    ar["checkpoint/dist"] << dist;
 }
 
 template <int N>
@@ -170,6 +186,7 @@ void ndim_spin_sim<N>::load(alps::hdf5::archive & ar) {
 
     ar["checkpoint/sweeps"] >> sweeps;
     ar["checkpoint/spins"] >> spins;
+    ar["checkpoint/dist"] >> dist;
 }
 
 template <int N>
