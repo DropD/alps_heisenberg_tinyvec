@@ -66,6 +66,17 @@ if __name__ == '__main__':
         plt.figure()
         corr = h5get(ar, 'Correlations')
         dist = h5get(ar, 'Distances')
-        plt.plot(dist[0], corr[0], 'x')
+        xc = []
+        yc = []
+        yc_e = []
+        for d in dist[0]:
+            if not d in xc:
+                xc.append(d)
+                cd = [corr[0][i] for i in range(len(corr[0])) if dist[0][i] == d]
+                yc.append(np.mean(cd))
+                yc_e.append(np.std(cd))
+        c = np.array([(xc[i], abs(yc[i]), yc_e[i]) for i in range(len(xc))], dtype = [('dist', float), ('corr', float), ('err', float)])
+        c.sort(order='dist')
+        plt.fill_between(c['dist'], c['corr'] + c['err'], c['corr'] - c['err'])
         plt.savefig(corr_file)
         subprocess32.call(['open', corr_file])
