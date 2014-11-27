@@ -1,15 +1,64 @@
 # HowTo: O(n) Spin Simulation
 
 This document describes how to use the ALPS C++ Libraries to simulate a classical O(n) spin model using local updates.
-It is meant as a starting point to write your own spin simulations using ALPS in C++. The code examples are shortened for readability and may or may not compile.
+It also aims to show how to:
+
+ * make use of alps::mcbase to develop a monte carlo simulation
+ * use it's `update()` to implement your own model
+ * add observables to the model
+ * use the `measurements()` method to calculate and store measurements
+ * run a simulation developed using the described techniques
+
+It is meant as a starting point to write your own spin simulations using ALPS in C++. 
+The inline code examples are shortened for readability and may or may not compile.
+Refer to the source files for a runnable version.
+ 
+### Running a Simulation
+First let's consider the basic structure of the main function needed to run our finished simulation in the end.
+This program reads parameters from a text input file with the structure `parameter=value`.
+
+```C++ hl_lines="13 14"
+/* my_mc_main.cpp */
+
+#include "my_mc_sim.hpp"
+#include <alps/parseargs.hpp>
+#include <alps/stop_callback.hpp>
+
+int main(int argc, char *argv[]) {
+    // get commandline options and parameters
+    alps::parseargs options(argc, argv);
+    parameters = alps::parameters_type< sim_type >::type(options.input_file);
+
+    // create and run the simulation
+    my_mc_sim sim(parameters);
+    sim.run(alps::stop_callback(options.timelimit));
+
+    // save the results in a hdf5 archive
+    alps::hdf5::archive ar(options.output_file, "w");
+    ar["/parameters"] << parameters;
+    ar["/simulation/results"] << results;
+
+    return EXIT_SUCCESS;
+}
+```
+It is not very big and the actual running of the simulation is all handled in the two highlighted lines.
+With just a few lines of code it can be made to take input files of different formats and to pick up from where it left if it was interrupted previously.
 
 ## A Basic MC Simulation
 
 ### Simulation class
 
-The simulation will be a derivate of alps::mcbase which already implements all the common tasks of Monte Carlo simulations. 
-The functions specific to a certain model are exposed as virtual functions and must be implemented when writing a simulation.
-Take a look at a minimal declaration of an simulation.
+The simulation will be a derivate of alps::mcbase which already implements all the common tasks of Monte Carlo simulations.
+
+ * it can easily be initialized from a parameter file
+ * it automatically calls the user implemented update step to do system sweeps
+ * for every sweep it performs user implemented measurements
+ * it handles storing results and parameters to files.
+ * it can write out an intermediate state from which the simulation can be continued later
+ * it prints out progress information.
+
+The functions specific to a certain model are exposed as pure virtual functions and must be implemented when writing a simulation.
+Take a look at an empty definition of a simulation class which you might use as a template if you want to develop a simulation from scratch.
 
 ```C++ hl_lines="11 13"
 /* my_mc_sim.hpp */
@@ -24,7 +73,7 @@ public:
 
     virtual void update(); // this will execute the MC update
     virtual void measure(); // this will perform measurements
-    virtual double fraction_completed() const; // this is used as a "progress bar"
+    virtual double fraction_completed() const; // this is used for progress output
 
     using alps::mcbase::save;
     virtual void save(alps::hdf5::archive & ar) const; // save intermediate state
@@ -38,72 +87,119 @@ private:
 ```
 
 The highlighted functions `update()` and `measure()` define the behaviour of the model and they are called by mcbase's `run()` method each simulation step.
-The Constructor is where parameters can be read into the simulation and internal data can be initialized.
+
 The `save` and `load` functions can be used to store and load intermediate state of the run, allowing interrupted simulations to take up from where they left.
+To enable that functionality those functions have to be extended with any data members that contribute to the state of the simulation.
+An example in a spin simulation would be the data structure that holds the system's spins.
 
-### Running the Simulation
-Now here is a basic main program that could be used to run the simulation.
-All except the highlighted lines of the main body deal with I/O for parameters and results.
-This progam assumes the name of a parameter file and optionally an output file to be given as a commandline argument. 
+the `fraction_completed` method should return a floating point number between 0.0 and 1.0 according to how far the simulation has progressed.
 
-```C++ hl_lines="13 14"
-/* my_mc_main.cpp */
-
-#include "my_mc_sim.hpp"
-#include <alps/parseargs.hpp>
-#include <alps/stop_callback.hpp>
-
-int main(int argc, char *argv[]) {
-    // get commandline options and parameters
-    alps::parseargs options(argc, argv);
-    parameters = alps::parameters_type<sim_type>::type(options.input_file);
-
-    // create and run the simulation
-    my_mc_sim sim(parameters);
-    sim.run(alps::stop_callback(options.timelimit));
-
-    // save the results in a hdf5 archive
-    alps::hdf5::archive ar(options.output_file, "w");
-    ar["/parameters"] << parameters;
-    ar["/simulation/results"] << results;
-
-    return EXIT_SUCCESS;
-}
-```
+In addition to those methods the base class has a number of data members to make our life easier.
 
 ## Implementing the Model
 The model used in this example is the O(N) model, a generalization of the Ising Model to spins of N dimensions.
 Special cases include the XY (N = 2) and Heisenberg (N = 3) models.
 The generalization is achieved in this example by templating the simulation class on the dimension N.
 
+Take a look at the class definition.
+
 ```C++
 #include "tinyvector.hpp"
-template <int N>
-class ALPS_DECL my_mc_sim : public alps::mcbase {
+template < int N >
+class ALPS_DECL ndim_spin_sim : public alps::mcbase {
     public:
-        typedef tinyvector<double, N> spintype;
+        typedef tinyvector< double, N > spintype;
+
+        ndim_spin_sim(parameters_type const & parms, std::size_t seed_offset = 0);
+        virtual void update();
+        virtual void measure();
+        virtual double fraction_completed() const;
+        using alps::mcbase::save;
+        virtual void save(alps::hdf5::archive & ar) const;
+        using alps::mcbase::load;
+        virtual void load(alps::hdf5::archive & ar);
+
+        const spintype random_spin(); // convenience funtion
+
     private:
         std::vector< spintype > spins;
         alps::graph_helper<> lattice;
+
+        alps::uniform_on_sphere_n< N, double, spintype > random_spin_gen;
+
+        int sweeps, thermalization_sweeps, total_sweeps;
+        int num_sites;
+        double beta;
 };
 ```
 
 The class template `tinyvector` (provided in the code) is a wrapper around boost::array with appropriate operators.
-The simulation class contains a vector of tinyvectors as a representation of the system's spins.
+The class now contains a vector named `spins` of tinyvectors as a representation of the system's spins.
 
-Next it needs a datastructure to hold the topology of the system. 
+Next it needs a datastructure to hold the topology of the system, the `lattice`. 
 ALPS provides the Lattice classes for this purpose we access the lattices via the `graph_helper` class template.
-Refer to the documentations for alps::lattice and boost::graph for more detail.
+The kind of Lattice to be used as well as it's size can now all be specified in a parameter file.
+(Refer to the documentations for alps::lattice and boost::graph for more detail.)
+
+
+For the update step we will pick a random spin potential new direction vector for it.
+Those directions have to be uniformly distributed across the unit sphere. 
+That's where `alps::uniform_on_sphere_n` comes in, as well as `random_spin()`.
+The same function is also used to create a random starting configuration.
+
+The `sweeps` variable will be used as a counter and will tell us together with `thermalization_sweeps` and `total_sweeps`, which we'll read in as parameters.
+
+The last two variables can easily be calculated from parameters but are kept around because they're used often.
+
+### The constructor
+Next we need to make sure we are initializing everything properly, the place to do that is the constructor.
+The constructor itself takes the same arguments as the constructor of mcbase, one of which has type `parameters_type`. 
+The base class is the first member to be initialized, so that it's member `parameters` can then be used to initialize our data members.
+An exception to this is the `lattice` which needs a different type of parameter object for which there is an adaptor function in `alps::make_deprecated_parameters`.
+
+ 
+```C++
+template< int N >
+ndim_spin_sim< N >::ndim_spin_sim(parameters_type const & parms, std::size_t seed_offset)
+    : alps::mcbase(parms, seed_offset)
+    , lattice(alps::make_deprecated_parameters(parms))
+    , num_sites(lattice.num_sites())
+    , spins(num_sites())
+    , random_spin_gen()
+    , sweeps(0)
+    , thermalization_sweeps(int(parameters["THERMALIZATION"]))
+    , total_sweeps(int(parameters["SWEEPS"]))
+    , beta(1. / double(parameters["T"]))
+{
+    //! initialize spins with random values
+    for(int i = 0; i < num_sites; ++i) {
+        spins[i] = random_spin();
+    }
+
+```
+
+Now there's another member of the base class that makes life easy for us.
+It keeps a map of `Observables` to which we can just add all the quantities we want to measure.
+In this case we are going for Magnetic susceptibility and Correlations, so we need a timed average of the magnetization as well as it's square.
+
+```C++
+
+    measurements
+        << alps::accumulator::RealObservable("Energy")
+        << alps::accumulator::RealVectorObservable("Magnetization")
+        << alps::accumulator::RealObservable("Magnetization^2")
+        << alps::accumulator::RealObservable("Magnetization^4")
+        << alps::accumulator::RealVectorObservable("Correlations")
+    ;
+}
+```
 
 ### The update() function
 This method contains the monte carlo step of the model, in this case a single spin update.
 
-The `random_spin` method is a convenience wrapper around ALPS' `uniform_on_sphere_n` functionality 
-which provides normalized direction vectors uniformly distributed across an n-dimensional sphere.
-
 ```C++
-template<int N>
-void my_mc_sim< N >::update() {
+template< int N >
+void ndim_spin_sim< N >::update() {
     for (int j = 0; j < num_sites; ++j) {
 
         // get a random site
@@ -128,18 +224,112 @@ void my_mc_sim< N >::update() {
 }
 ```
 
+In order to obtain the Energy difference between the current and the new configuration we need to sum over the neighbors of the chosen spin site.
+Fortunately the lattice class has special neighbor iterators for this.
+
 ### The measure() function
+In this example we target quantities will be energy, magnetic susceptibility and the spin pair correlation function.
+In order to keep simulation time as low possible we record only measurements necessary to calculate our target quantities in a later analysis step.
+
+We record the magnetization as well as it's squared value because magnetic susceptibility can be defined as chi = V / T * ( < m^2 > - < m >^2 ), 
+where V is the volume, T is the temperature, m stands for magnetization and < . > stands for averaging with respect to time.
+
+It's good to know also that ALPS not only keeps a time series for every quantity we measure but will also save the average and error over time.
+
+```C++
+template < int N >
+void ndim_spin_sim< N >::measure() {
+    sweeps++;
+    if (sweeps > thermalization_sweeps) {
+```
+
+Because we don't want to record measurements during thermalization we keep a sweep counter and check if thermalization is finished.
+
+```C++
+        spintype magnetization;
+        magnetization.initialize(0);
+        double energy = 0;
+        std::vector< double > corr(num_sites, 0);
+```
+
+We initialize the variables we use to calculate our measurements.
+Then we go on to calculating our quantities.
+
+```C++
+        // To measure magnetization and correlations we sum over all sites.
+        for (int i = 0; i < lattice.num_sites(); ++i) {
+            magnetization += spins[i];
+            corr[i] = dot(spins[0], spins[i]);
+        }
+
+        // To measure the Energy we sum only over neighbored sites (bonds in terms of the lattice).
+        alps::graph_helper<>::bond_iterator bond_it, bond_end;
+        for(boost::tie(bond_it, bond_end) = lattice.bonds(); bond_it != bond_end; ++bond_it) {
+            energy += - dot(spins[lattice.source(*bond_it)], spins[lattice.target(*bond_it)]);
+        }
+
+        // pull in operator/ for vectors
+        using alps::ngs::numeric::operator/;
+        energy /= lattice.num_sites(); //! $\frac{1}{V} \sum_{\text{i,j nn}}{\sigma_i \sigma_j}$
+        magnetization /= lattice.num_sites(); //! $\frac{1}{V} \sum_{i}{\sigma_i}$
+        double magnetization2 = dot(magnetization, magnetization);
+```
+
+The last step is to store our quantities.
+Our base class provides the `measurements` data member for this purpose.
+
+```C++
+        measurements["Energy"] << energy;
+        measurements["Magnetization"] << vector_from_tinyvector(magnetization);
+        measurements["Magnetization^2"] << magnetization2;
+        measurements["Magnetization^4"] << magnetization2 * magnetization2;
+        measurements["Correlations"] << corr;
+    }
+}
+```
+
+### save and load
+For the save & load functionality it is important that we extend the corresponding functions with the state information we added.
+
+```C++
+template <int N>
+void ndim_spin_sim<N>::save(alps::hdf5::archive & ar) const {
+    mcbase::save(ar);
+    ar["checkpoint/sweeps"] << sweeps;
+    ar["checkpoint/spins"] << spins;
+}
+
+template <int N>
+void ndim_spin_sim<N>::load(alps::hdf5::archive & ar) {
+    mcbase::load(ar);
+    ar["checkpoint/sweeps"] >> sweeps;
+    ar["checkpoint/spins"] >> spins;
+}
  
+```
+
+### progress information
+The `fraction_completed` method is easy to implement, here we choose to not count thermalization sweeps as progress.
+
+```C++
+template <int N>
+double ndim_spin_sim<N>::fraction_completed() const {
+    return (sweeps < thermalization_sweeps ? 0. : ( sweeps - thermalization_sweeps ) / double(total_sweeps));
+}
+```
+
+## Running an Experiment
+
 ## API Headers for reference
 
-The following ALPS Headers will be used:
+The following ALPS Headers were used:
 
- * alps/mcbase.hpp
- * alps/ngs/numeric.hpp
- * alps/ngs/make_deprecated_parameters.hpp
- * alps/random/uniform_on_sphere_n.hpp
- * alps/lattice.h
- * alps/hdf5/archive.hpp
- * alps/hdf5/vector.hpp
- * alps/hdf5/array.hpp
+ * `alps/mcbase.hpp`
+ * `alps/ngs/numeric.hpp`
+ * `alps/ngs/make_deprecated_parameters.hpp`
+ * `alps/random/uniform_on_sphere_n.hpp`
+ * `alps/lattice.h`
+ * `alps/hdf5/archive.hpp`
+ * `alps/hdf5/vector.hpp`
+ * `alps/hdf5/array.hpp`
  
