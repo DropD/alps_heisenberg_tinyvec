@@ -1,4 +1,4 @@
-import subprocess32 as sp, 
+import subprocess32 as sp
 import sys, os, argparse, pyalps, re
 from matplotlib import pyplot as plt
 import numpy as np
@@ -13,16 +13,13 @@ parser = argparse.ArgumentParser(description='Run and analyze heisenberg simulat
 subparsers = parser.add_subparsers()
 
 sp_run = subparsers.add_parser('run')
-sp_analyze = subparsers.add_parser('anayze')
+sp_analyze = subparsers.add_parser('analyze')
 
 parser.add_argument('infile', default='param.txt')
 
 sp_run.add_argument('-j')
 sp_run.add_argument('--no-analysis', action='store_true')
 sp_run.add_argument('program')
-sp_run.set_defaults(func=run_exp)
-
-sp_replot.set_defaults(func=plot)
 
 def run_exp(args):
     sp.call(['parameter2xml', args.infile])
@@ -34,66 +31,90 @@ def run_exp(args):
     else:
         for run_infile in runs:
             run_out = sp.check_output([args.program, run_infile])
-            print '--- run {} ---'.format(run)
+            print '--- run {} ---'.format(run_infile)
             print run_out
     if not args.no_analysis:
         analyze(args)
 
-def get_chi(result_files)
-    ar  = pyalps.hdf5.iArchive(run_outfile)
+def get_chi(result_files):
     T   = np.array([p['T'] for p in pyalps.loadProperties(result_files)])
     V   = np.array([p['L']**3 for p in pyalps.loadProperties(result_files)])
-    mm  = np.array([mag[0].y[0].sq() for mag in pyalps.loadMeasurements(result_files, what = 'Magnetization')])
-    m2  = np.array([msq[0].y[0] for mag in pyalps.loadMeasurements(result_files, what = 'magnetization^2')])
+    mag  = pyalps.loadMeasurements(result_files, what='Magnetization')
+    mag2 = pyalps.loadMeasurements(result_files, what='Magnetization^2')
+    from pyalps.alea import MCScalarData as msd
+    mm  = np.array([np.sum([msd(i.mean, i.error).sq() for i in j[0].y]) for j in mag])
+    m2  = np.array([msd(i[0].y[0].mean, i[0].y[0].error) for i in mag2])
 
     beta = 1. / T
     chi = beta * V * (m2 - mm)
 
-    return np.array(zip(T, chi), dtype = [('T', np.float), ('chi', np.float)])
+    result = np.array(zip(T, chi), dtype = [('T', np.float), ('chi', 'object')])
+    result.sort(order='T')
+    return result
 
-def get_corr(result_file):
-    ar  = pyalps.hdf5.iArchive(run_outfile)
-    corr = h5get(ar, 'Correlations')
-    dist = h5get(ar, 'Distances')
+def get_corr(result_files):
+    T    = np.array([p['T'] for p in pyalps.loadProperties(result_files)])
+    corr = pyalps.loadMeasurements(result_files, what = 'Correlations')
+    dist = pyalps.loadMeasurements(result_files, what = 'Distances')
 
-    corr_data = np.array(zip(dist, corr), 
-                         dtype = [('dist', np.float), ('corr', np.float)])
-    corr_data.sort(order='dist')
-    
-    g = np.array([(dist, 0., 0.) for dist in np.unique(corr_data['dist'])],
-                 dtype = [('dist', np.float), ('corr', np.float), ('err', np.float)])
+    corr_data = [np.array(zip(dist[i][0].y.mean, corr[i][0].y), 
+                         dtype = [('dist', np.float), ('corr', 'object')])
+                 for i in range(len(dist))
+                ]
+    cbins = [{i:[] for i in np.unique(j['dist'])} for j in corr_data]
+    for i in range(len(corr_data)):
+        for cj in corr_data[i]:
+            cbins[i][cj['dist']].append(cj['corr'])
 
-def analyze(args)
+    ct = [('dist', 'f8'), ('corr', 'object')]
+    result = [np.array([(j, np.abs(np.sum(cbi[j]) / float(len(cbi[j])))) for j in cbi], dtype=ct) for cbi in cbins]
+    for r in result:
+        r.sort(order='dist')
+    return result, T
+
+def analyze(args):
+    print 'running analysis'
     runs = pyalps.getResultFiles(prefix = args.infile)
 
-    chi_data = get_chi()
+    chi_data = get_chi(runs)
     T = chi_data['T']
     chi = [c.mean for c in chi_data['chi']]
     chi_err = [c.error for c in chi_data['chi']]
 
     plt.figure()
     plt.errorbar(T, chi, yerr = chi_err)
-    plt.vline(1. / 0.693035)
-    plt.xlabel(r'Temperature $\frac{T}{J}$')
+    yl = plt.ylim()
+    plt.vlines(1. / 0.693035, yl[0], yl[1])
+    plt.ylim(yl)
+    xl =(min(T), max(T))
+    plt.xlim(xl)
+    plt.xlabel(r'Temperature $T$')
     plt.ylabel(r'Magnetic Susceptibility $\chi$')
     plt.savefig('{}.plot_chi.pdf'.format(args.infile))
 
+    idx = [1, len(runs)/3, -2]
+    T = np.array([p['T'] for p in pyalps.loadProperties(runs)])
+    runsorted = np.array(zip(T, runs), dtype=[('T', 'f8'), ('run', object)])
+    runsorted.sort(order = 'T')
+    corr_data, T = get_corr([runsorted[i]['run'] for i in idx])
+
     plt.figure()
-    corr = h5get(ar, 'Correlations')
-    dist = h5get(ar, 'Distances')
-    xc = []
-    yc = []
-    yc_e = []
-    for d in dist[0]:
-        if not d in xc:
-            xc.append(d)
-            cd = [corr[0][i] for i in range(len(corr[0])) if dist[0][i] == d]
-            yc.append(np.mean(cd))
-            yc_e.append(np.std(cd))
-    c = np.array([(xc[i], abs(yc[i]), yc_e[i]) for i in range(len(xc))], dtype = [('dist', float), ('corr', float), ('err', float)])
-    c.sort(order='dist')
-    plt.errorbar(c['dist'], c['corr'], yerr = c['err'])
-    plt.savefig(corr_file)
+    for i in range(len(corr_data)):
+        temp = T[i]
+        corr = corr_data[i]
+        x = corr['dist']
+        y = [i.mean for i in corr['corr']]
+        ye = [i.error for i in corr['corr']]
+        plt.errorbar(x, y, yerr = ye, label = 'T = {}'.format(temp))
+    plt.ylim((-0.01, 1.01))
+    plt.xlabel(r'Distance $r$ in Lattice Units')
+    plt.ylabel(r'Pair Correlation Function $g(r)$')
+    plt.legend()
+    plt.savefig('{}.plot_corr.pdf'.format(args.infile))
+
+sp_run.set_defaults(func=run_exp)
+sp_analyze.set_defaults(func=analyze)
 
 if __name__ == '__main__':
-    parser.parse_args()
+    args = parser.parse_args()
+    args.func(args)
