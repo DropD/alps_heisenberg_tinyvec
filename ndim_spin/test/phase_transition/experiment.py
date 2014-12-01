@@ -91,6 +91,8 @@ def get_chi(result_files):
     return result
 
 def get_corr(result_files):
+    '''collect information and perform calculations for the correlation function plot.
+    '''
     T    = np.array([p['T'] for p in pyalps.loadProperties(result_files)])
     corr = get_vector_data(result_files, what = 'Correlations')
     dist = get_vector_mean(result_files, what = 'Distances')
