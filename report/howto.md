@@ -318,7 +318,107 @@ double ndim_spin_sim<N>::fraction_completed() const {
 }
 ```
 
-## Running an Experiment
+## running an example experiment
+All the steps involved in running an experiment are covered in greater detail in the ALPS documentation.
+There is different workflows available, the one shown here is python based because ALPS also provides some handy python modules.
+
+The basic process behind running our experiment is now
+
+ 1. create a set of parameter files with different values for T
+ 1. run our simulation for each of those
+ 1. collect, analyze and plot the results.
+
+### using python with ALPS
+The first task is easily achieved by running the ALPS programm `parameter2xml` on a parameter file like the following.
+
+```
+LATTICE_LIBRARY="/opt/alps/lib/xml/lattices.xml"
+LATTICE="simple cubic lattice"
+L=10
+THERMALIZATION=1000
+SWEEPS=100000
+{T=1.0;}
+{T=1.1;}
+{T=1.2;}
+...
+```
+
+this can also be done from python as follows (assuming `parameter2xml` is in your `PATH`)
+
+```python
+import subprocess32 as sp
+sp.call(['parameter2xml', <input file name>])
+```
+
+The second step is also quite easy to do from standard python
+```python
+for file in input_files:
+    run_out = sp.check_output([args.program, run_infile])
+    print run_out
+```
+
+Both of the above snippets are taken from the `run` function in the provided source file `experiment.py`.
+The last step is very much up to the experimentator and the experiment to be performed.
+As examples i will just show the two functions in `experiment.py` which read in data from the simulation results
+and return ready-to-plot data.
+
+Again, all the functions that come with the `pyplot` module are described in the official ALPS documentation.
+
+```python
+def get_chi(result_files):
+    '''collect information and perform calculations for the magnetic susceptibility plot.
+    '''
+    T   = np.array([p['T'] for p in pyalps.loadProperties(result_files)])
+    V   = np.array([p['L']**3 for p in pyalps.loadProperties(result_files)])
+    mag  = get_vector_data(result_files, what='Magnetization')
+    mm   = np.sum(np.vectorize(pyalps.math.sq)(mag), 1)
+    m2   = get_scalar_data(result_files, what='Magnetization^2')
+
+    beta = 1. / T
+    chi = beta * V * (m2 - mm)
+
+    chi_dt = [('T', 'f8'), ('chi', 'object')]
+    result = np.array(zip(T, chi), dtype = chi_dt)
+    result.sort(order='T')
+    return result
+```
+
+```python
+def get_corr(result_files):
+    '''collect information and perform calculations for the correlation function plot.
+    '''
+    T    = np.array([p['T'] for p in pyalps.loadProperties(result_files)])
+    corr = get_vector_data(result_files, what = 'Correlations')
+    dist = get_vector_mean(result_files, what = 'Distances')
+    dist_corr_dt = [('dist', 'f8'), ('corr', 'O')]
+
+    cbins = [{i:[] for i in np.unique(j)} for j in dist]
+    result = [i for i in range(len(result_files))]
+    for i in range(len(result_files)):                                      # for each result file
+        corr_data = np.array(zip(dist[i], corr[i]), dtype = dist_corr_dt)   # group distance and correlation together
+        for cj in corr_data:
+            cbins[i][cj['dist']].append(cj['corr'])                         # group all correlations belongning to the same distance
+        for j in cbins[i]:
+            cbins[i][j] = np.abs( np.sum(cbins[i][j]) / float(len(cbins[i][j])) ) # take the mean for every distance
+
+        # group distance, mean correlation into a numpy array 
+        result[i] = np.array([(d, c) for (d, c) in cbins[i].iteritems()], dtype = dist_corr_dt)
+        result[i].sort(order='dist')                                        # sort in order of ascending distance
+    return result, T
+ 
+```
+
+And finally an example on how to find the result files used as parameters for the above functions (taken from the `analyze` function).
+
+```python
+runs = pyalps.getResultFiles(prefix = args.infile)
+chi_data = get_chi(runs)
+```
+
+### results
+
+<img src="plot_chi.png" alt="magnetic susceptibility plot" width=45%/>
+<img src="plot_corr.png" alt="correlation function plot" width=45%/>
 
 ## API Headers for reference
 
