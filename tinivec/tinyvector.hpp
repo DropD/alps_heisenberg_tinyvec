@@ -12,6 +12,6 @@
 #include <iostream>
 
 #include "tinyvector_default.hpp"
-#include "tinivec_kernels.hpp"
+#include "tinyvector_kernels.hpp"
 
 #endif
