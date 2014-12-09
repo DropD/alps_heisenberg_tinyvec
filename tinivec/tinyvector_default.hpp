@@ -41,8 +41,10 @@ class tinyvector {
         const iterator end() const { return _data.end(); }
         iterator end() { return _data.end(); }
 
-        inline const T operator[](int i) const { return _data[i]; };
-        inline T & operator[](int i) { return _data[i]; };
+        inline const T operator[](int i) const { 
+            return _data[i]; }
+        inline T & operator[](int i) { 
+            return _data[i]; }
 
         void initialize(T init) {
             for(int i = 0; i < N; ++i)
@@ -63,7 +65,7 @@ class tinyvector {
             ar >> alps::make_pvp("data", _data);
         }
     private:
-        data_type _data __attribute__((aligned(4 * sizeof(T))));
+        data_type _data __attribute__((aligned( 16 )));
 };
 
 template <class T, int N, class Opt>

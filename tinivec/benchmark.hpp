@@ -1,5 +1,5 @@
-#ifndef TVEC_PLUS_BENCH_HPP
-#define TVEC_PLUS_BENCH_HPP
+#ifndef TVEC_BENCHMARKER_HPP
+#define TVEC_BENCHMARKER_HPP
 
 #include "tinyvector.hpp"
 #include "rdtsc.h"
@@ -15,10 +15,8 @@ class tv_benchmarker {
     public:
         typedef tinyvector<double, N, Opt> tinivec;
         tv_benchmarker(int size) : data(size) {
-            std::cout << "check" << std::endl;
             for(int i = 0; i < size; ++i) {
-                //~ data[i] = vgen(r01.engine());
-                data.push_back(vgen(r01.engine()));
+                data[i] = vgen(r01.engine());
             }
             _result.initialize(0);
             _error.initialize(0);
@@ -60,7 +58,6 @@ class tv_benchmarker {
             }
 
             cycles = (double)(COUNTER_DIFF(end, start)) / num_runs;
-            //~ sumsum /= (num_runs * data.size());
             _result = sumsum;
             for(int i = 0; i < N; ++i)
                 _error[i]  = sumsum[i] - refsum[i];
@@ -88,10 +85,10 @@ class tv_benchmarker {
         tinivec error() { return _error; }
 
     private:
-        std::vector<tinivec> data;
+        std::vector<tinivec> data __attribute__(( aligned( 16 )));
         alps::random01 r01;
         alps::uniform_on_sphere_n<N, double, tinivec> vgen;
-        tinivec _result, _error;
+        tinivec _result, _error __attribute__(( aligned( 16 )));
 };
 
 #endif
