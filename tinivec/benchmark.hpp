@@ -8,14 +8,18 @@
 #include <alps/random/uniform_on_sphere_n.h>
 
 #include <vector>
+#include <iostream>
 
 template<class Op, int N, class Opt>
 class tv_benchmarker {
     public:
         typedef tinyvector<double, N, Opt> tinivec;
         tv_benchmarker(int size) : data(size) {
-            for(int i = 0; i < data.size(); ++i)
-                data[i] = vgen(r01.engine());
+            std::cout << "check" << std::endl;
+            for(int i = 0; i < size; ++i) {
+                //~ data[i] = vgen(r01.engine());
+                data.push_back(vgen(r01.engine()));
+            }
             _result.initialize(0);
             _error.initialize(0);
         }

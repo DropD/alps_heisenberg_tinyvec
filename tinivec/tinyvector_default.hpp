@@ -63,7 +63,7 @@ class tinyvector {
             ar >> alps::make_pvp("data", _data);
         }
     private:
-        data_type _data __attribute__((aligned(16 * sizeof(T))));
+        data_type _data __attribute__((aligned(4 * sizeof(T))));
 };
 
 template <class T, int N, class Opt>

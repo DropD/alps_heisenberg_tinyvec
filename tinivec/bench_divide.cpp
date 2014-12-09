@@ -3,7 +3,7 @@
 
 int main(int argc, char const *argv[])
 {
-    bench_op<_divide>("res_divide.txt");
+    bench_op<_divide>(argv);
 
     return 0;
 }

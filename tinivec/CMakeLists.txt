@@ -15,7 +15,7 @@ enable_language(C CXX)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${bench_flags}")
 set(bench_flags "-march=native -mavx") 
-set(euler_flags "-fabi-version=6")
+#set(euler_flags "-fabi-version=6")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${bench_flags} ${euler_flags}")
 
 # += benchmark

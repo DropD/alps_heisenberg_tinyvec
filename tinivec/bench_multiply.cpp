@@ -3,7 +3,7 @@
 
 int main(int argc, char const *argv[])
 {
-    bench_op<_multiply>("res_multiply.txt");
+    bench_op<_multiply>(argv);
 
     return 0;
 }
