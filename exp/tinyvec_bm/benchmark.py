@@ -34,7 +34,8 @@ def runbm(args):
     '''get benchmark executables and run them
     '''
     bins = {i : [os.path.join(args.binpath, i)] for i in ops}
-    args = {i : ['bm_{}.txt'.format(i), 'res_{}.txt'.format(i), args.n] for i in ops}
+    #~ args = {i : ['bm_{}.dat'.format(i), 'res_{}.txt'.format(i), args.n] for i in ops}
+    args = {i : ['bm_{}.dat'.format(i), args.n] for i in ops}
 
     for op in ops:
         call = bins[op] + args[op]
