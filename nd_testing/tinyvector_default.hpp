@@ -4,8 +4,6 @@
 #ifndef TINYVECTOR_DEFAULT_HPP
 #define TINYVECTOR_DEFAULT_HPP
 
-//~ #include "ndim_spin.hpp"
-
 #include <boost/array.hpp>
 #include <alps/hdf5.hpp>
 
@@ -63,7 +61,7 @@ class tinyvector {
             ar >> alps::make_pvp("data", _data);
         }
     private:
-        boost::array<double, N> _data __attribute__((aligned(16 * sizeof(double))));
+        boost::array<double, N> _data __attribute__((aligned( 16 * sizeof(double) )));
 };
 
 template <int N, class Opt>

@@ -52,11 +52,11 @@ yt = results['r_tv_native'][:,1:]
 #----------------------- simple vs template vectorized -------------------------------
 
 plt.figure()
-plt.plot(x, yn[:, 0], label =  '2D hand', color = 'b', ls = '-')
-plt.plot(x, yn[:, 1], label =  '4D hand', color = 'g', ls = '-')
-plt.plot(x, yn[:, 2], label =  '8D hand', color = 'r', ls = '-')
-plt.plot(x, yn[:, 3], label = '16D hand', color = 'c', ls = '-')
-plt.plot(x, yn[:, 4], label = '32D hand', color = 'm', ls = '-')
+plt.plot(x, yn[:, 0], label =  '2D simple', color = 'b', ls = '-')
+plt.plot(x, yn[:, 1], label =  '4D simple', color = 'g', ls = '-')
+plt.plot(x, yn[:, 2], label =  '8D simple', color = 'r', ls = '-')
+plt.plot(x, yn[:, 3], label = '16D simple', color = 'c', ls = '-')
+plt.plot(x, yn[:, 4], label = '32D simple', color = 'm', ls = '-')
 
 plt.plot(x, yt[:, 0], label =  '2D template', color = 'b', ls = '--')
 plt.plot(x, yt[:, 1], label =  '4D template', color = 'g', ls = '--')
@@ -69,7 +69,7 @@ plt.yscale('log')
 plt.legend(loc = 'best')
 fpl.xlabel('size')
 fpl.ylabel('# cycles')
-fpl.title(r'simple vs template unrolled vectorized \\ Release flags')
+fpl.title(r'simple vs template unrolled vectorized - Release flags')
 plt.savefig('svt_runtime.pdf')
  
 #----------------------- hand vectorized vs template vectorized -------------------------------
@@ -92,7 +92,7 @@ plt.yscale('log')
 plt.legend(loc = 'best')
 fpl.xlabel('size')
 fpl.ylabel('# cycles')
-fpl.title(r'hand unrolled vectorized vs template unrolled vectorized \\ Release flags')
+fpl.title(r'hand unrolled vectorized vs template unrolled vectorized - Release flags')
 plt.savefig('hvt_runtime.pdf')
 
 #----------------------- speedup simple v tv per size and dim -------------------------------
@@ -111,7 +111,7 @@ plt.legend(loc = 'best')
 fpl.xlabel('size')
 fpl.ylabel('speedup')
 fpl.title(r'speedup template vec vs simple')
-plt.savefig('hvt_speedup.pdf')
+plt.savefig('svt_speedup.pdf')
  
 
 #----------------------- speedup per size and dim -------------------------------
@@ -130,7 +130,7 @@ plt.legend(loc = 'best')
 fpl.xlabel('size')
 fpl.ylabel('speedup')
 fpl.title(r'speedup template vs hand (should be 1)')
-plt.savefig('svt_speedup.pdf')
+plt.savefig('hvt_speedup.pdf')
  
 
 

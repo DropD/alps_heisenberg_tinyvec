@@ -98,6 +98,35 @@ struct _vectorize<Op, 4>
 
 #endif
 
+struct _plus;
+struct _minus;
+struct _divide;
+struct _multiply;
+     
+template <int N>
+inline const tinyvector<double, N, INTRIN_OPT> & operator+= (tinyvector<double, N, INTRIN_OPT> & left, const tinyvector<double, N, INTRIN_OPT> & right) {
+    _vectorize<_plus, N>::apply(left, right, 0);
+    return left;
+}
+
+template <int N>
+inline const tinyvector<double, N, INTRIN_OPT> & operator-= (tinyvector<double, N, INTRIN_OPT> & left, const tinyvector<double, N, INTRIN_OPT> & right) {
+    _vectorize<_minus, N>::apply(left, right, 0);
+    return left;
+}
+
+template <int N>
+inline const tinyvector<double, N, INTRIN_OPT> & operator*= (tinyvector<double, N, INTRIN_OPT> & left, const tinyvector<double, N, INTRIN_OPT> & right) {
+    _vectorize<_multiply, N>::apply(left, right, 0);
+    return left;
+}
+
+template <int N>
+inline const tinyvector<double, N, INTRIN_OPT> & operator/= (tinyvector<double, N, INTRIN_OPT> & left, const tinyvector<double, N, INTRIN_OPT> & right) {
+    _vectorize<_divide, N>::apply(left, right, 0);
+    return left;
+}
+ 
 struct _plus
 {
     template <class T>
@@ -185,25 +214,5 @@ struct _divide
     }
 #endif
 };
-
-template <int N>
-inline const typename optvec<N>::t & operator+= (typename optvec<N>::t & left, const typename optvec<N>::t & right) {
-    _vectorize<_plus, N>::apply(left, right, 0);
-}
-
-template <int N>
-inline const typename optvec<N>::t & operator-= (typename optvec<N>::t & left, const typename optvec<N>::t & right) {
-    _vectorize<_minus, N>::apply(left, right, 0);
-}
-
-template <int N>
-inline const typename optvec<N>::t & operator*= (typename optvec<N>::t & left, const typename optvec<N>::t & right) {
-    _vectorize<_multiply, N>::apply(left, right, 0);
-}
-
-template <int N>
-inline const typename optvec<N>::t & operator/= (typename optvec<N>::t & left, const typename optvec<N>::t & right) {
-    _vectorize<_divide, N>::apply(left, right, 0);
-}
 
 #endif

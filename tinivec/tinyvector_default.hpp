@@ -65,11 +65,11 @@ class tinyvector {
             ar >> alps::make_pvp("data", _data);
         }
     private:
-        data_type _data __attribute__((aligned( 16 )));
+        data_type _data __attribute__((aligned( 16 * sizeof(double) )));
 };
 
-template <class T, int N, class Opt>
-inline const tinyvector<T, N, Opt> & operator+=(tinyvector<T, N, Opt> &left, const tinyvector<T, N, Opt> &right) {
+template <class T, int N>
+inline const tinyvector<T, N, NO_OPT> & operator+=(tinyvector<T, N, NO_OPT> &left, const tinyvector<T, N, NO_OPT> &right) {
     for(int i = 0; i < N; ++i)
         left[i] += right[i];
     return left;
