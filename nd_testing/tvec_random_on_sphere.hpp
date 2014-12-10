@@ -92,7 +92,7 @@ class tvec_random_on_sphere {
         }
 
     private:
-        boost::array<float, 16> _buffer __attribute__((align( 16 * sizeof(float))));
+        boost::array<float, 16> _buffer __attribute__((aligned( 16 * sizeof(float))));
         int _cursor;
 };
 

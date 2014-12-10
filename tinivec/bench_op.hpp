@@ -32,21 +32,21 @@ void bench_op(const char * argv[])
 
     << std::endl;
 
-    for(int i = 1; i < 1<<max_exponent; i *= 2) {
-        tv_benchmarker<OP, 2, NO_OPT> no2(i);
-        tv_benchmarker<OP, 2, INTRIN_OPT> mm2(i);
+    for(int i = 16; i < 1<<max_exponent; i *= 2) {
+        tv_benchmarker<OP, 2, NO_OPT> no2(i/2);
+        tv_benchmarker<OP, 2, INTRIN_OPT> mm2(i/2);
 
-        tv_benchmarker<OP, 3, NO_OPT> no3(i);
-        tv_benchmarker<OP, 3, INTRIN_OPT> mm3(i);
+        tv_benchmarker<OP, 3, NO_OPT> no3(i/3);
+        tv_benchmarker<OP, 3, INTRIN_OPT> mm3(i/3);
 
-        tv_benchmarker<OP, 4, NO_OPT> no4(i);
-        tv_benchmarker<OP, 4, INTRIN_OPT> mm4(i);
+        tv_benchmarker<OP, 4, NO_OPT> no4(i/4);
+        tv_benchmarker<OP, 4, INTRIN_OPT> mm4(i/4);
 
-        tv_benchmarker<OP, 8, NO_OPT> no8(i);
-        tv_benchmarker<OP, 8, INTRIN_OPT> mm8(i);
+        tv_benchmarker<OP, 8, NO_OPT> no8(i/8);
+        tv_benchmarker<OP, 8, INTRIN_OPT> mm8(i/8);
 
-        tv_benchmarker<OP, 16, NO_OPT> no16(i);
-        tv_benchmarker<OP, 16, INTRIN_OPT> mm16(i);
+        tv_benchmarker<OP, 16, NO_OPT> no16(i/16);
+        tv_benchmarker<OP, 16, INTRIN_OPT> mm16(i/16);
 
         fout << i << " "
             << no2.calibrate_and_run() << " "
