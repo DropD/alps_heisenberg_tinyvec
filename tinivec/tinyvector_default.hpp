@@ -15,6 +15,11 @@
 
 struct NO_OPT {};
 
+template <int N>
+struct _next_lower_power_of_2 {
+    static const int value = 1 << ( N >> 1);
+};
+
 template <class T = double, int N = 3, class Opt = NO_OPT>
 class tinyvector {
     public:
@@ -65,7 +70,7 @@ class tinyvector {
             ar >> alps::make_pvp("data", _data);
         }
     private:
-        data_type _data __attribute__((aligned( 16 * sizeof(double) )));
+        data_type _data __attribute__((aligned( 16 * sizeof(T) )));
 };
 
 template <class T, int N>

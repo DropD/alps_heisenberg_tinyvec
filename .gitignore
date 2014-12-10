@@ -5,6 +5,8 @@
 *.h5
 build/
 build*/
+*build/
+debug/
 alps-svn/
 *.in.xml
 ALPS.xsl

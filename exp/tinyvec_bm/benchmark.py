@@ -1,3 +1,5 @@
+#!python
+
 import subprocess32 as sp
 import sys, os, argparse, pyalps, re
 from matplotlib import pyplot as plt

@@ -85,10 +85,10 @@ class tv_benchmarker {
         tinivec error() { return _error; }
 
     private:
-        std::vector<tinivec> data __attribute__(( aligned( 16 )));
+        std::vector<tinivec> data __attribute__(( aligned( 16 * sizeof(double) )));
         alps::random01 r01;
         alps::uniform_on_sphere_n<N, double, tinivec> vgen;
-        tinivec _result, _error __attribute__(( aligned( 16 )));
+        tinivec _result, _error __attribute__(( aligned( 16 * sizeof(double) )));
 };
 
 #endif
