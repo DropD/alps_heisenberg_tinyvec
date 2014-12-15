@@ -1,4 +1,4 @@
-#!python
+#!/usr/bin/env python
 
 import subprocess32 as sp
 import sys, os, argparse, pyalps, re
@@ -38,6 +38,7 @@ def runbm(args):
     bins = {i : [os.path.join(args.binpath, i)] for i in ops}
     #~ args = {i : ['bm_{}.dat'.format(i), 'res_{}.txt'.format(i), args.n] for i in ops}
     args = {i : ['bm_{}.dat'.format(i), args.n] for i in ops}
+    #~ args = {i : ['{}.dat'.format(i[:2]), args.n] for i in ops}
 
     for op in ops:
         call = bins[op] + args[op]
@@ -90,6 +91,7 @@ def analyze(args):
     print 'plotting benchmarks'
     for op in ops:
         results = dio.read('bm_'+op+'.dat')
+        #~ results = dio.read(op[:2]+'.dat')
         x = results[:,0]
         y = results[:,1:]
         plot_runtime(x, y, op)

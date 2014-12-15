@@ -29,8 +29,13 @@ class tinyvector {
         typedef typename data_type::const_iterator const_iterator;
 
         tinyvector() : _data() {}
-        tinyvector(int dim) : _data() { assert(dim = N); }
+        tinyvector(T value) : _data() { initialize(value); }
         tinyvector(const std::vector<T> &vec) {
+            for(int i = 0; i < N; ++i)
+                _data[i] = vec[i];
+        }
+        template<class Opt2>
+        tinyvector(const tinyvector<T, N, Opt2> & vec) {
             for(int i = 0; i < N; ++i)
                 _data[i] = vec[i];
         }
@@ -168,10 +173,10 @@ double abs(const tinyvector<T, N, Opt> &spin) {
 template <class T, int N, class Opt>
 std::ostream& operator<<(std::ostream& os, const tinyvector<T, N, Opt>& spin)
 {
-    os << "[ ";
+    //~ os << "[ ";
     for(int i = 0; i < N; ++i)
         os << spin[i] << " ";
-    os << " ]";
+    //~ os << " ]";
     return os;
 }
 

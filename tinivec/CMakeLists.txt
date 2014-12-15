@@ -24,7 +24,7 @@ else(Euler)
 endif(Euler)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${bench_flags} ${euler_flags}")
 
-# += benchmark
+#  benchmark
 add_executable(plus bench_plus.cpp)
 target_link_libraries(plus ${ALPS_LIBRARIES})
 add_executable(minus bench_minus.cpp)
@@ -33,3 +33,6 @@ add_executable(divide bench_divide.cpp)
 target_link_libraries(divide ${ALPS_LIBRARIES})
 add_executable(multiply bench_multiply.cpp)
 target_link_libraries(multiply ${ALPS_LIBRARIES})
+
+add_executable(btest btest.cpp)
+target_link_libraries(btest ${ALPS_LIBRARIES})

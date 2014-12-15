@@ -14,15 +14,25 @@ template<class Op, int N, class Opt>
 class tv_benchmarker {
     public:
         typedef tinyvector<double, N, Opt> tinivec;
-        tv_benchmarker(int size) : data(size) {
+        tv_benchmarker(int size) : data(size, tinivec(0)),  _result(0), _error(0) {
             for(int i = 0; i < size; ++i) {
-                data[i] = vgen(r01.engine());
+                tinivec tmp;
+                tmp.initialize(0);
+                tmp = random_spin();
+                std::cout << "tmp: " << tmp << std::endl;
+                std::cout << "size: " << size << std::endl;
+                std::cout << "data size: " << data.size() << std::endl;
+                std::cout << "i: " << i << std::endl;
+                data[i] = tmp;
+                std::cout << data[i] << std::endl;
             }
-            _result.initialize(0);
-            _error.initialize(0);
+            //~ _result.initialize(0);
+            //~ _error.initialize(0);
+            std::cout << "err = " << _error << std::endl;
         }
 
         double calibrate_and_run() {
+            std::cout << "err = " << _error << std::endl;
             int num_runs = 1;
             double cycles;
             tsc_counter start, end;
@@ -62,6 +72,10 @@ class tv_benchmarker {
             for(int i = 0; i < N; ++i)
                 _error[i]  = sumsum[i] - refsum[i];
 
+            std::cout << "sumsum = " << sumsum << std::endl;
+            std::cout << "refsum = " << refsum << std::endl;
+            std::cout << "err = " << _error << std::endl;
+
             const double tol = 1e-4;
             for(int i = 0; i < N; ++i) {
                 double diff = _error[i];
@@ -83,6 +97,10 @@ class tv_benchmarker {
 
         tinivec result() { return _result; }
         tinivec error() { return _error; }
+
+        tinivec  random_spin() {
+            return vgen(r01.engine());
+        }
 
     private:
         std::vector<tinivec> data __attribute__(( aligned( 16 * sizeof(double) )));

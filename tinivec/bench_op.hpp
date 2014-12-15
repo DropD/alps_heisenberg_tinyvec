@@ -11,10 +11,10 @@ template<class OP>
 void bench_op(const char * argv[])
 {
     std::string output(argv[1]);
-        int max_exponent = atoi(argv[2]);
+    int max_exponent = atoi(argv[2]);
     
     std::ofstream fout;
-        fout.open(output.c_str());
+    fout.open(output.c_str());
     
     fout << "SIZE" << " "
 
@@ -60,6 +60,21 @@ void bench_op(const char * argv[])
             << mm4.calibrate_and_run() << " "
             << mm8.calibrate_and_run() << " "
             << mm16.calibrate_and_run() << " "
+            
+            << std::endl;
+
+        std::cout << i << " "
+            << no2.error() << " "
+            << no3.error() << " "
+            << no4.error() << " "
+            << no8.error() << " "
+            << no16.error() << " "
+
+            << mm2.error() << " "
+            << mm3.error() << " "
+            << mm4.error() << " "
+            << mm8.error() << " "
+            << mm16.error() << " "
             
             << std::endl;
 
