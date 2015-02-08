@@ -28,7 +28,7 @@ struct optvec{ typedef tinyvector<double, N, INTRIN_OPT> t; };
 template <class Op, int N>
 struct _vectorize {
     template <class vec>
-    static inline const void apply(vec & left, const vec & right, const int start) {
+    static inline const void apply(vec & left, const vec & right, const int start = 0) {
         _vectorize<Op, STEP>::apply(left, right, start);
         _vectorize<Op, N - STEP>::apply(left, right, start + STEP);
     }
@@ -38,14 +38,14 @@ template <class Op>
 struct _vectorize<Op, 0>
 {
     template <class vec>
-    static inline const void apply(vec & left, const vec & right, const int start) { }
+    static inline const void apply(vec & left, const vec & right, const int start = 0) { }
 };
 
 template <class Op>
 struct _vectorize<Op, 1>
 {
     template <class vec>
-    static inline const void apply(vec & left, const vec & right, const int start) {
+    static inline const void apply(vec & left, const vec & right, const int start = 0) {
         Op::apply(left, right, start);
     }
 };
@@ -56,7 +56,7 @@ template <class Op>
 struct _vectorize<Op, 2>
 {
     template <class vec>
-    static inline const void apply(vec & left, const vec & right, const int start) {
+    static inline const void apply(vec & left, const vec & right, const int start = 0) {
         double * l = left.data();
         const double * r = right.data();
         __m128d mml, mmr, mms;
@@ -75,7 +75,7 @@ template <class Op>
 struct _vectorize<Op, 3>
 {
     template <class vec>
-    static inline const void apply(vec & left, const vec & right, const int start) {
+    static inline const void apply(vec & left, const vec & right, const int start = 0) {
         _vectorize<Op, 2>::apply(left, right, start);
         _vectorize<Op, 1>::apply(left, right, start + 2);
     }
@@ -85,7 +85,7 @@ template <class Op>
 struct _vectorize<Op, 4>
 {
     template <class vec>
-    static inline const void apply(vec & left, const vec & right, const int start) {
+    static inline const void apply(vec & left, const vec & right, const int start = 0) {
         double * l = left.data();
         const double * r = right.data();
         __m256d mml, mmr, mms;

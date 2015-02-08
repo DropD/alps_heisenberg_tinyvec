@@ -1,0 +1,233 @@
+\documentclass[a4paper]{scrartcl}
+
+\usepackage{mathtools}
+\usepackage{cleveref}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage[usenames,dvipsnames,svgnames]{xcolor}
+\lstset{
+    language=C++,
+    basicstyle=\footnotesize\ttfamily,
+    breaklines=true,
+    keywordstyle=\color{DarkGreen}
+    }
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+\newcommand{\sse}{SSE}
+
+\author{Rico Häuselmann}
+\title{highlevel optimization of tinyvector}
+
+\begin{document}
+\section*{Introduction}
+The \texttt{tinyvector} class template is intended to be used inside the inner loops of physics programs such as monte carlo spin simulations,
+inside the ALPS framework. Originally developed to hold spin vectors for the $O(n)$-Model it is designed for a very small amount of dimensions only
+as the runtime for such simulations scales exponentially in the number of dimensions.
+
+Typically in the inner loop of the targeted kind of simulation not very complex operations are used on spin vectors; mostly addition, multiplication
+and dot products are applied. Thus, the four basic operations ($+, -, *, /$) were optimized using intrinsic vector instructions. 
+The optimized operations were benchmarked against the naive for loop implementation to see whether a speedup was obtained.
+
+\section*{Methods}
+\subsection*{Optimization}
+One of the \texttt{tinyvector}s template parameters, \texttt{Opt}, is used as a tag to determine wether optimization is desired by the user.
+The following operators are overloaded for \texttt{tinyvector<double, N, INTRIN\_OPT>} to use either AVX, SSE or simple loop unrolling, choosing the highest 
+level of vectorization available among them.
+
+\begin{lstlisting}
+template <int N>
+inline const tinyvector<double, N, INTRIN_OPT> & operator+=
+template <int N> 
+inline const tinyvector<double, N, INTRIN_OPT> & operator-=
+template <int N> 
+inline const tinyvector<double, N, INTRIN_OPT> & operator*=
+template <int N> 
+inline const tinyvector<double, N, INTRIN_OPT> & operator/=
+\end{lstlisting}
+
+The process of dispatching and chaining the calls to the most vectorized version of the basic operation for doubles will now be described using
+\texttt{operator+=} as an example.
+
+First the maximum amount of doubles on which will be operated simultaneously is stored in \texttt{STEP}.
+\begin{lstlisting}                                                                                                    
+/** 
+ * determine the vectorization step length, aka how many doubles can we fit into a register? 
+ */
+#ifdef __AVX__
+    const int STEP = 4;
+#else
+    #ifdef __SSE2__
+        const int STEP = 2;
+    #else
+        const int STEP = 1;
+    #endif
+#endif                                                                                                                  
+\end{lstlisting}
+
+The Operator struct \texttt{\_plus} defines \texttt{apply} functions for single values, vectors, SSE and AVX registers.
+Each just adds the \texttt{right} to the \texttt{left} argument in place.
+
+\begin{lstlisting}
+/**
+ * operator kernels for different vectorization levels
+ */
+struct _plus
+{
+    template <class T>
+    static inline const void apply(T & left, const T & right) {
+        left += right;
+    }
+    template <class vec>
+    static inline const void apply(vec & left, const vec & right, const int start) {
+        left[start] += right[start];
+    }
+#ifdef __SSE2__
+    static inline const __m128d apply(__m128d & mml, __m128d & mmr) {
+        return _mm_add_pd(mml, mmr);
+    }
+#endif
+#ifdef __AVX__
+    static inline const __m256d apply(__m256d & mml, __m256d & mmr) {
+        return _mm256_add_pd(mml, mmr);
+    }
+#endif
+};
+\end{lstlisting}
+
+The \texttt{\_vectorize} class template chains calls to its specializations, resulting in a completely unrolled sequence of 
+calls to \texttt{\_plus::apply} each using the best available vectorization (except for the remainder if $N \mod \texttt{STEP} \neq 0$, where the next best is used).
+
+\begin{lstlisting}
+/**
+ * recursively call binary operator kernels 
+ */
+template <class Op, int N>
+struct _vectorize {
+    template <class vec>
+    static inline const void apply(vec & left, const vec & right, const int start = 0) {
+        _vectorize<Op, STEP>::apply(left, right, start);
+        _vectorize<Op, N - STEP>::apply(left, right, start + STEP);
+    }
+};
+
+template <class Op>
+struct _vectorize<Op, 0>
+{
+    template <class vec>
+    static inline const void apply(vec & left, const vec & right, const int start = 0) { }
+};
+
+template <class Op>
+struct _vectorize<Op, 1>
+{
+    template <class vec>
+    static inline const void apply(vec & left, const vec & right, const int start = 0) {
+        Op::apply(left, right, start);
+    }
+};
+
+#ifdef __SSE2__
+
+template <class Op>
+struct _vectorize<Op, 2>
+{
+    template <class vec>
+    static inline const void apply(vec & left, const vec & right, const int start = 0) {
+        double * l = left.data();
+        const double * r = right.data();
+        __m128d mml, mmr, mms;
+        mml = _mm_load_pd(l + start);
+        mmr = _mm_load_pd(r + start);
+        mms = Op::apply(mml, mmr);
+        _mm_store_pd(l + start, mms);
+    }
+};
+
+#endif
+
+#ifdef __AVX__
+
+template <class Op>
+struct _vectorize<Op, 3>
+{
+    template <class vec>
+    static inline const void apply(vec & left, const vec & right, const int start = 0) {
+        _vectorize<Op, 2>::apply(left, right, start);
+        _vectorize<Op, 1>::apply(left, right, start + 2);
+    }
+};
+
+template <class Op>
+struct _vectorize<Op, 4>
+{
+    template <class vec>
+    static inline const void apply(vec & left, const vec & right, const int start = 0) {
+        double * l = left.data();
+        const double * r = right.data();
+        __m256d mml, mmr, mms;
+        mml = _mm256_load_pd(l + start);
+        mmr = _mm256_load_pd(r + start);
+        mms = Op::apply(mml, mmr);
+        _mm256_store_pd(l + start, mms);
+    }
+};
+
+#endif
+\end{lstlisting}  
+
+And finally the full definition for \texttt{operator+=}:
+
+\begin{lstlisting}
+/**
+ * operator overload
+ */
+template <int N>
+inline const tinyvector<double, N, INTRIN_OPT> & operator+= (tinyvector<double, N, INTRIN_OPT> & left, const tinyvector<double, N, INTRIN_OPT> & right) {
+    _vectorize<_plus, N>::apply(left, right);
+    return left;
+}
+\end{lstlisting}
+
+\subsection*{Benchmarking}
+The benchmark was written to be close to the use case, a class holding a \texttt{std::vector} of \texttt{tinyvector}s 
+with a function that loops through the vector applying the operation to be benchmarked to every item in turn.
+The runtime was measured in clock cycles using RDTSC.
+
+The benchmarks were run on the EULER cluster.
+
+\section*{Results}
+The Speedup of the optimized versus the naive default implementation for each of the four basic math operators was measured and plotted (\cref{fig:su-pl,fig:su-mi,fig:su-mu,fig:su-di}).
+
+\begin{figure}
+    \begin{subfigure}{\textwidth}
+        \includegraphics[width=0.8\textwidth]{results/su_plus.pdf}
+        \caption{addition operator.}
+        \label{fig:su-pl} 
+    \end{subfigure}
+
+    \begin{subfigure}{\textwidth}
+        \includegraphics[width=0.8\textwidth]{results/su_minus.pdf}
+        \caption{subtraction operator.}
+        \label{fig:su-mi}
+    \end{subfigure}
+    \caption{Speedup of optimized vs. naive version for plus and minus operators for some tinyvector dimensionalities. \texttt{\# of tinyvectors} is the size of the \texttt{std::vector} containing the tinyvectors.}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{\textwidth}
+        \includegraphics[width=0.8\textwidth]{results/su_multiply.pdf}
+        \caption{(element wise) multiplication operator.}
+        \label{fig:su-mu}
+    \end{subfigure}
+
+    \begin{subfigure}{\textwidth}
+        \includegraphics[width=0.8\textwidth]{results/su_divide.pdf}
+        \caption{(element wise) division operator.}
+        \label{fig:su-di}
+    \end{subfigure}
+    \caption{Speedup of optimized vs. naive version for multiplication and division operators for some tinyvector dimensionalities. \texttt{\# of tinyvectors} is the size of the \texttt{std::vector} containing the tinyvectors.}
+\end{figure}
+
+\end{document}
