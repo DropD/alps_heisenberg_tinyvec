@@ -415,7 +415,7 @@ runs = pyalps.getResultFiles(prefix = args.infile)
 chi_data = get_chi(runs)
 ```
 
-### results
+### Results
 
 <img src="plot_chi.png" alt="magnetic susceptibility plot" width=45%/>
 <img src="plot_corr.png" alt="correlation function plot" width=45%/>
