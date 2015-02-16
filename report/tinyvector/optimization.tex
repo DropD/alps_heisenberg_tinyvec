@@ -31,9 +31,10 @@ The optimized operations were benchmarked against the naive for loop implementat
 
 \section*{Methods}
 \subsection*{Optimization}
+Optimization was only implemented on the level of individual \texttt{tinvyector}s. The applied methods are vectorization via intrinsics and complete loop unrolling, since it is intended for typically less than 16 elements. It will work for any number of elements in a \texttt{tinyvector}, however beyond a certain size complete loop unrolling is expected to become suboptimal.
 One of the \texttt{tinyvector}s template parameters, \texttt{Opt}, is used as a tag to determine wether optimization is desired by the user.
-The following operators are overloaded for \texttt{tinyvector<double, N, INTRIN\_OPT>} to use either AVX, SSE or simple loop unrolling, choosing the highest 
-level of vectorization available among them.
+The following operators are overloaded for \texttt{tinyvector<double, N, INTRIN\_OPT>} to use either AVX, SSE or simple kernels to minimize the number of operations needed for each \texttt{tinyvector}.
+The kernels and the associated dispatch mechanisms are contained within tinyvector\_kernels.cpp.
 
 \begin{lstlisting}
 template <int N>
@@ -194,10 +195,17 @@ The benchmark was written to be close to the use case, a class holding a \texttt
 with a function that loops through the vector applying the operation to be benchmarked to every item in turn.
 The runtime was measured in clock cycles using RDTSC.
 
-The benchmarks were run on the EULER cluster.
+The benchmarks were run on the EULER cluster. The compute nodes on EULER contain two 12-core Intel Xeon E5-2697v2 processors each with 32 KB of L1, 256KB of L2 and 2.5 MB of L3 cache per core.
+All cores on this processor share L3 caches.
 
 \section*{Results}
 The Speedup of the optimized versus the naive default implementation for each of the four basic math operators was measured and plotted (\cref{fig:su-pl,fig:su-mi,fig:su-mu,fig:su-di}).
+
+Typically for addition, subraction and multiplication speedups were in the range 0.5-1.5 for 2 and 3 dimensions, 1.0-2.0 for 4 dimensions and 1.2-4.5 for 16 dimensions depending on the number of \texttt{tinyvector}s processed in one iteration of the inner loop.
+This suggests that for 2 and 3 dimensions some care should be taken to only use the optimized version of the tinyvector if the system size is greater than $10^3$ as for smaller systems it would be considerably slower. However in all other cases the optimized version should be at least about as fast as the naive implementation and potentially up to 5 times as fast.
+Common to all three operators is a sharp reduction in speedup for the 16 dimensional \texttt{tinyvector} between system sizes $2^12$ and $2^13$.
+
+For division on the other hand using the optimized version lead to significant speedups around 1.5-4.2 in allmost all cases, except for system sizes $2^17$ from $2^19$, where for 2-4 dimensions the speedup dropped to slightly below 1.0 and for 16 dimensions to about 2.0.
 
 \begin{figure}
     \begin{subfigure}{\textwidth}
