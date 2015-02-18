@@ -11,8 +11,8 @@
 #include <iostream>
 #include <exception>
 
-struct wrong_result_exception : public std::exception {
-    const char* what() const _NOEXCEPT{ return "wrong result"; }
+struct wrong_result_exception : std::exception {
+    const char* what() const throw() { return "wrong result"; }
 };
 
 #define RUN_OP(result, data, op) \
