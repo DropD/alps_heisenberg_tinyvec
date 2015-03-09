@@ -16,14 +16,13 @@ class commandline_interface(object):
                                                    input file''')
 
 
-        self.sp_run.add_argument('-j', metavar='N', help='run N simulations in parallel (requires whe GNU parallel program.)')
         self.sp_run.add_argument('--no-analysis', action='store_true', help='only run the simulations, do not analyze results')
         self.sp_run.add_argument('program', help='the simulation executable')
-        self.sp_run.add_argument('infile', default='param.txt')
+        self.sp_run.add_argument('-i', nargs='?', const='param.txt', default = None, metavar='inputfile')
 
-        self.sp_analyze.add_argument('infile', default='param.txt')
+        self.sp_analyze.add_argument('-i', nargs='?', const='param.txt', default = 'param', metavar='input-prefix')
         
-        self.sp_clean.add_argument('infile', default='param.txt', metavar='infile')
+        self.sp_clean.add_argument('-i', nargs='?', const='param.txt', default = 'param', metavar='input-prefix')
 
     def add_run_func(self, run_func):
         self.sp_run.set_defaults(func=run_func)
@@ -34,20 +33,33 @@ class commandline_interface(object):
     def add_clean_func(self, cl_func):
         self.sp_clean.set_defaults(func=cl_func)
 
+dpar = lambda T : {
+    "LATTICE_LIBRARY" : "/opt/alps/lib/xml/lattices.xml",
+    "LATTICE"         : "simple cubic lattice",
+    "L"               : 10,
+    "THERMALIZATION"  : 1000,
+    "SWEEPS"          : 100000,
+    "T"               : T
+}
+
+default_params = [dpar(T) for T in np.arange(1.0, 2.2, 0.1)]
+
 def run_exp(args):
     '''create individual input files and run our simulation on them.
     '''
-    sp.check_output(['parameter2xml', args.infile])         # create an xml input file for each run
-    runs = [f for f in os.listdir(os.getcwd()) if re.match('{}.task\d*.in.xml'.format(args.infile), f)]
-    if args.j:                                      # in case the -j option is specified we want to use parallel
-        prog_call = ['parallel', '-j', args.j, args.program, ':::']
-        prog_call.extend(runs)
-        run_out = sp.check_output(prog_call)
-    else:                                           # good old sequential way of doing things
-        for run_infile in runs:
-            run_out = sp.check_output([args.program, run_infile])
-            print '--- run {} ---'.format(run_infile)
-            print run_out
+    # create XML input files
+    if args.i:
+        infile = pyalps.convert2xml(args.i)
+    else:
+        infile = pyalps.writeInputFiles('param', default_params)
+
+    # set args.i to the base name for the rest of the program
+    args.i = infile[:infile.find('.in.xml')]
+
+    # run the simulation
+    infiles = pyalps.recursiveGlob('.', args.i + '.task*.xml')
+    print 'running experiment'
+    results = pyalps.runApplication(args.program, infiles)
     if not args.no_analysis:                        # run analysis if not otherwise specified
         analyze(args)
 
@@ -114,7 +126,7 @@ def get_corr(result_files):
 
 def analyze(args):
     print 'running analysis'
-    runs = pyalps.getResultFiles(prefix = args.infile)
+    runs = pyalps.getResultFiles(prefix = args.i)
 
     chi_data = get_chi(runs)
     T = chi_data['T']
@@ -130,7 +142,7 @@ def analyze(args):
     plt.xlim(xl)
     plt.xlabel(r'Temperature $T$')
     plt.ylabel(r'Magnetic Susceptibility $\chi$')
-    plt.savefig('{}.plot_chi.pdf'.format(args.infile))
+    plt.savefig('{}.plot_chi.pdf'.format(args.i))
 
     idx = [1, len(runs)/3, -2]
     T = np.array([p['T'] for p in pyalps.loadProperties(runs)])
@@ -150,13 +162,13 @@ def analyze(args):
     plt.xlabel(r'Distance $r$ in Lattice Units')
     plt.ylabel(r'Pair Correlation Function $g(r)$')
     plt.legend()
-    plt.savefig('{}.plot_corr.pdf'.format(args.infile))
+    plt.savefig('{}.plot_corr.pdf'.format(args.i))
 
 def clean(args):
-    resfiles = pyalps.getResultFiles(prefix = args.infile)
+    resfiles = pyalps.getResultFiles(prefix = args.i)
     for resf in resfiles:
         os.remove(resf)
-    infiles = [f for f in os.listdir(os.getcwd()) if re.match('{}.*in.*'.format(args.infile), f)]
+    infiles = [f for f in os.listdir(os.getcwd()) if re.match('{}.*in.*'.format(args.i), f)]
     for inf in infiles:
         os.remove(inf)
 

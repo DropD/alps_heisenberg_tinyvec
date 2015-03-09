@@ -13,7 +13,8 @@
 * ~~"stands for averaging with respect to time.", I would not call it "time", as Monte Carlo doesn't provide a notion of time. It is just a statistical average over the samples. [OK]~~
 
 ## using python with ALPS
-* You use a hybrid python-command-line approach when you create the parameter input. Could you do this purely in python using pyalps? You can have a look at mc-03-magnetization/tutorial3a.py.
+* ~~You use a hybrid python-command-line approach when you create the parameter input. Could you do this purely in python using pyalps? You can have a look at mc-03-magnetization/tutorial3a.py. [OK]~~
+* Test solution []
 
 ## Results
 * Could you write a short interpretation of the results and maybe some comparison with literature?
