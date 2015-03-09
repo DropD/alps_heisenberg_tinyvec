@@ -418,8 +418,32 @@ chi_data = get_chi(runs)
 
 ### Results
 
+The graphs below show the results obtained by running the simulation with the following parameters:
+
+```
+LATTICE_LIBRARY="/opt/alps/lib/xml/lattices.xml"
+LATTICE="simple cubic lattice"
+L=10
+THERMALIZATION=1000
+SWEEPS=100000
+{T=1.0;}
+{T=1.1;}
+{T=1.2;}
+{T=1.3;}
+{T=1.4}
+{T=1.5;}
+{T=1.6;}
+{T=1.7;}
+{T=1.8;}
+{T=1.9;}
+{T=2.0;}
+{T=2.1;}
+{T=2.2;}
+```
+
 <img src="plot_chi.png" alt="magnetic susceptibility plot" width=45%/>
 <img src="plot_corr.png" alt="correlation function plot" width=45%/>
+The graph to the left shows the magnetic susceptibility over a range of temperatures. The vertical line marks the value found in ... TODO. The peak found experimentally is found at a slightly higher temperature as expected, due to finite size effects.
 
 ## API headers for reference
 
