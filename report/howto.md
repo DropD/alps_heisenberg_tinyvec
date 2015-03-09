@@ -1,4 +1,4 @@
-# HowTo: O(n) Spin Simulation
+# HowTo: O(n) spin simulation
 
 This document describes how to use the ALPS C++ Libraries to simulate a classical O(n) spin model using local updates.
 It also aims to show how to:
@@ -13,7 +13,7 @@ It is meant as a starting point to write your own spin simulations using ALPS in
 The inline code examples are shortened for readability and may or may not compile.
 Refer to the source files for a runnable version.
  
-### Running a Simulation
+### Running a simulation
 First let's consider the basic structure of the main function needed to run our finished simulation in the end.
 This program reads parameters from a text input file with the structure `parameter=value`.
 
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 It is not very big and the actual running of the simulation is all handled in the two highlighted lines.
 With just a few lines of code it can be made to take input files of different formats and to pick up from where it left if it was interrupted previously.
 
-## A Basic MC Simulation
+## A basic MC simulation
 
 ### Simulation class
 
@@ -60,7 +60,7 @@ The simulation will be a derivate of alps::mcbase which already implements all t
 The functions specific to a certain model are exposed as pure virtual functions and must be implemented when writing a simulation.
 Take a look at an empty definition of a simulation class which you might use as a template if you want to develop a simulation from scratch.
 
-```C++ hl_lines="11 13"
+```C++ hl_lines="11 12"
 /* my_mc_sim.hpp */
 
 #include <alps/mcbase.hpp>
@@ -96,7 +96,7 @@ the `fraction_completed` method should return a floating point number between 0.
 
 In addition to those methods the base class has a number of data members to make our life easier.
 
-## Implementing the Model
+## Implementing the model
 The model used in this example is the O(N) model, a generalization of the Ising Model to spins of N dimensions.
 Special cases include the XY (N = 2) and Heisenberg (N = 3) models.
 The generalization is achieved in this example by templating the simulation class on the dimension N.
@@ -142,12 +142,13 @@ The kind of Lattice to be used as well as it's size can now all be specified in 
 (Refer to the documentations for alps::lattice and boost::graph for more detail.)
 
 
-For the update step we will pick a random spin potential new direction vector for it.
-Those directions have to be uniformly distributed across the unit sphere. 
+For the update step we will pick a random spin and a (potential) new direction vector for it.
+Each such direction must be uniformly distributed across the unit sphere. 
 That's where `alps::uniform_on_sphere_n` comes in, as well as `random_spin()`.
 The same function is also used to create a random starting configuration.
 
-The `sweeps` variable will be used as a counter and will tell us together with `thermalization_sweeps` and `total_sweeps`, which we'll read in as parameters.
+The `sweeps` variable will be used as a counter by the base class to determine together with `total_sweeps` (read in from the `SWEEPS` parameter) when to stop the simulation loop.
+We use it in `measure() > thermalization_sweeps` to avoid measuring during thermalization and in `fraction_completed()` to determine how far the simulation has progressed.
 
 The last two variables can easily be calculated from parameters but are kept around because they're used often.
 
@@ -228,11 +229,11 @@ In order to obtain the Energy difference between the current and the new configu
 Fortunately the lattice class has special neighbor iterators for this.
 
 ### The measure() function
-In this example we target quantities will be energy, magnetic susceptibility and the spin pair correlation function.
+In this example the target quantities will be energy, magnetic susceptibility and the spin pair correlation function.
 In order to keep simulation time as low possible we record only measurements necessary to calculate our target quantities in a later analysis step.
 
 We record the magnetization as well as it's squared value because magnetic susceptibility can be defined as chi = V / T * ( < m^2 > - < m >^2 ), 
-where V is the volume, T is the temperature, m stands for magnetization and < . > stands for averaging with respect to time.
+where V is the volume, T is the temperature, m stands for magnetization and < . > stands for averaging over MC samples.
 
 It's good to know also that ALPS not only keeps a time series for every quantity we measure but will also save the average and error over time.
 
@@ -288,7 +289,7 @@ Our base class provides the `measurements` data member for this purpose.
 }
 ```
 
-### save and load
+### Save and load
 For the save & load functionality it is important that we extend the corresponding functions with the state information we added.
 
 ```C++
@@ -308,7 +309,7 @@ void ndim_spin_sim<N>::load(alps::hdf5::archive & ar) {
  
 ```
 
-### progress information
+### Progress information
 The `fraction_completed` method is easy to implement, here we choose to not count thermalization sweeps as progress.
 
 ```C++
@@ -318,7 +319,7 @@ double ndim_spin_sim<N>::fraction_completed() const {
 }
 ```
 
-## running an example experiment
+## Running an example experiment
 All the steps involved in running an experiment are covered in greater detail in the ALPS documentation.
 There is different workflows available, the one shown here is python based because ALPS also provides some handy python modules.
 
@@ -328,7 +329,7 @@ The basic process behind running our experiment is now
  1. run our simulation for each of those
  1. collect, analyze and plot the results.
 
-### using python with ALPS
+### Using python with ALPS
 The first task is easily achieved by running the ALPS programm `parameter2xml` on a parameter file like the following.
 
 ```
@@ -420,7 +421,7 @@ chi_data = get_chi(runs)
 <img src="plot_chi.png" alt="magnetic susceptibility plot" width=45%/>
 <img src="plot_corr.png" alt="correlation function plot" width=45%/>
 
-## API Headers for reference
+## API headers for reference
 
 The following ALPS Headers were used:
 
