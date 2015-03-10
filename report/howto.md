@@ -330,7 +330,7 @@ The basic process behind running our experiment is now
  1. collect, analyze and plot the results.
 
 ### Using python with ALPS
-The first task is easily achieved by running the ALPS programm `parameter2xml` on a parameter file like the following.
+The first task is easily achieved by running the ALPS programm `parameter2xml` or `paramter2hdf5` on a parameter file like the following.
 
 ```
 LATTICE_LIBRARY="/opt/alps/lib/xml/lattices.xml"
@@ -344,21 +344,32 @@ SWEEPS=100000
 ...
 ```
 
-this can also be done from python as follows (assuming `parameter2xml` is in your `PATH`)
+this can also be done from python as follows (requires pyalps)
 
 ```python
-import subprocess32 as sp
-sp.call(['parameter2xml', <input file name>])
-```
+import pyalps
 
-The second step is also quite easy to do from standard python
+param_tpl = lambda T : {
+    "LATTICE_LIBRARY" : "/opt/alps/lib/xml/lattices.xml",
+    "LATTICE"         : "simple cubic lattice",
+    "L"               : 10
+    "THERMALIZATION"  : 1000
+    "SWEEPS"          : 100000
+    "T"               : T
+}
+
+params = [param_tpl(T) for T in np.arange(1.0, 2.2, 0.1)] 
+infiles = pyalps.writeInputH5Files('param', params)
+
+```
+This will create hdf5 input files as pyalps does not support running a program over a sequence of xml input files.
+
+The second step also requires pyalps
 ```python
-for file in input_files:
-    run_out = sp.check_output([args.program, run_infile])
-    print run_out
+results = pyalps.runApplication(args.program, infiles)
 ```
 
-Both of the above snippets are taken from the `run` function in the provided source file `experiment.py`.
+Both of the above snippets are taken slightly modified from the `run` function in the provided source file `experiment.py`.
 The last step is very much up to the experimentator and the experiment to be performed.
 As examples i will just show the two functions in `experiment.py` which read in data from the simulation results
 and return ready-to-plot data.
@@ -441,9 +452,16 @@ SWEEPS=100000
 {T=2.2;}
 ```
 
+The graph to the left shows the magnetic susceptibility over a range of temperatures. The vertical line marks the value corresponding to the inverse critical temperature 1/Tc = 0.693035 listed in [1]. The peak found experimentally is found at a slightly higher temperature, due to finite size effects. This is to be expected for small a lattice size of only 10.
+
 <img src="plot_chi.png" alt="magnetic susceptibility plot" width=45%/>
 <img src="plot_corr.png" alt="correlation function plot" width=45%/>
-The graph to the left shows the magnetic susceptibility over a range of temperatures. The vertical line marks the value found in ... TODO. The peak found experimentally is found at a slightly higher temperature as expected, due to finite size effects.
+
+The image to the right shows the pair correlations vs. distance. The overall curve of the three graphs is as expected, the minor peaks at certain distances are assumed to be artifacts of the lattice structure and were not further investigated.
+
+## References
+
+1. Computational Physics (p. 85), M. Troyer, ETH Zuerich, 2005/2006
 
 ## API headers for reference
 
