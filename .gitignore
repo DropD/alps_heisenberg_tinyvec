@@ -10,7 +10,9 @@ debug/
 alps-svn/
 *.in.xml
 ALPS.xsl
-*.pdf
+ndim_spin/test/phase_transition/*.pdf
+heisenberg_lattice/test/phase_transition/*.pdf
+nd_testing/test/phase_transition/*.pdf
 *.dat
 *.trace
 results.txt
