@@ -14,7 +14,7 @@
 
 ## using python with ALPS
 * ~~You use a hybrid python-command-line approach when you create the parameter input. Could you do this purely in python using pyalps? You can have a look at mc-03-magnetization/tutorial3a.py. [OK]~~
-* Test solution []
+* ~~Test solution [OK]~~
 
 ## Results
 * Could you write a short interpretation of the results and maybe some comparison with literature?

@@ -18,11 +18,17 @@ class commandline_interface(object):
 
         self.sp_run.add_argument('--no-analysis', action='store_true', help='only run the simulations, do not analyze results')
         self.sp_run.add_argument('program', help='the simulation executable')
-        self.sp_run.add_argument('-i', nargs='?', const='param.txt', default = None, metavar='inputfile')
+        self.sp_run.add_argument('-n', '--name', default = 'param', metavar='<exp name>')
 
-        self.sp_analyze.add_argument('-i', nargs='?', const='param.txt', default = 'param', metavar='input-prefix')
+        param_args = self.sp_run.add_argument_group('parameter overrides', 'use these optional arguments to override the default parameters.')
+        param_args.add_argument('-L', '--lattice-size', default = 10, help='Lattice Size (int)', metavar='i', type=int)
+        param_args.add_argument('-t', '--thermalization', default = 1000, help='# of thermalization sweeps (int)', metavar='i', type=int)
+        param_args.add_argument('-s', '--sweeps', default = 100000, help='# of sweeps (int)', metavar = 'i', type=int)
+        param_args.add_argument('-T', '--temperature-range', nargs=3, default = [1.0, 2.2, 0.1], help = 'start stop step (float)', metavar = ('f', 'f', 'f'), type=float)
+
+        self.sp_analyze.add_argument('-n', '--name', default = 'param', metavar='<experiment name>')
         
-        self.sp_clean.add_argument('-i', nargs='?', const='param.txt', default = 'param', metavar='input-prefix')
+        self.sp_clean.add_argument('-n', '--name', default = 'param', metavar='<experiment name>')
 
     def add_run_func(self, run_func):
         self.sp_run.set_defaults(func=run_func)
@@ -33,31 +39,25 @@ class commandline_interface(object):
     def add_clean_func(self, cl_func):
         self.sp_clean.set_defaults(func=cl_func)
 
-dpar = lambda T : {
-    "LATTICE_LIBRARY" : "/opt/alps/lib/xml/lattices.xml",
-    "LATTICE"         : "simple cubic lattice",
-    "L"               : 10,
-    "THERMALIZATION"  : 1000,
-    "SWEEPS"          : 100000,
-    "T"               : T
-}
-
-default_params = [dpar(T) for T in np.arange(1.0, 2.2, 0.1)]
-
 def run_exp(args):
     '''create individual input files and run our simulation on them.
     '''
-    # create XML input files
-    if args.i:
-        infile = pyalps.convert2xml(args.i)
-    else:
-        infile = pyalps.writeInputFiles('param', default_params)
 
-    # set args.i to the base name for the rest of the program
-    args.i = infile[:infile.find('.in.xml')]
+    param_tpl = lambda T : {
+        "LATTICE_LIBRARY" : "/opt/alps/lib/xml/lattices.xml",
+        "LATTICE"         : "simple cubic lattice",
+        "L"               : args.lattice_size, # default 10
+        "THERMALIZATION"  : args.thermalization, # default 1000
+        "SWEEPS"          : args.sweeps, # default 100000
+        "T"               : T # default arange(1.0, 2.2, 0.1)
+    }
+
+    params = [param_tpl(T) for T in np.arange(*args.temperature_range)] 
+
+    # create H5 input files
+    infiles = pyalps.writeInputH5Files('param', params)
 
     # run the simulation
-    infiles = pyalps.recursiveGlob('.', args.i + '.task*.xml')
     print 'running experiment'
     results = pyalps.runApplication(args.program, infiles)
     if not args.no_analysis:                        # run analysis if not otherwise specified
@@ -126,7 +126,7 @@ def get_corr(result_files):
 
 def analyze(args):
     print 'running analysis'
-    runs = pyalps.getResultFiles(prefix = args.i)
+    runs = pyalps.getResultFiles(prefix = args.name)
 
     chi_data = get_chi(runs)
     T = chi_data['T']
@@ -142,7 +142,7 @@ def analyze(args):
     plt.xlim(xl)
     plt.xlabel(r'Temperature $T$')
     plt.ylabel(r'Magnetic Susceptibility $\chi$')
-    plt.savefig('{}.plot_chi.pdf'.format(args.i))
+    plt.savefig('{}.plot_chi.pdf'.format(args.name))
 
     idx = [1, len(runs)/3, -2]
     T = np.array([p['T'] for p in pyalps.loadProperties(runs)])
@@ -162,13 +162,13 @@ def analyze(args):
     plt.xlabel(r'Distance $r$ in Lattice Units')
     plt.ylabel(r'Pair Correlation Function $g(r)$')
     plt.legend()
-    plt.savefig('{}.plot_corr.pdf'.format(args.i))
+    plt.savefig('{}.plot_corr.pdf'.format(args.name))
 
 def clean(args):
-    resfiles = pyalps.getResultFiles(prefix = args.i)
+    resfiles = pyalps.getResultFiles(prefix = args.name)
     for resf in resfiles:
         os.remove(resf)
-    infiles = [f for f in os.listdir(os.getcwd()) if re.match('{}.*in.*'.format(args.i), f)]
+    infiles = [f for f in os.listdir(os.getcwd()) if re.match('{}.*in.*'.format(args.name), f)]
     for inf in infiles:
         os.remove(inf)
 
