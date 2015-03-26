@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 
 import subprocess32 as sp
-import sys, os, argparse, pyalps, re
+import sys, os, argparse, re
 from matplotlib import pyplot as plt
 from ethpy import datio as dio
 from ethpy import fncplot as fpl
 import numpy as np
+
+try:
+    import pyalps
+except:
+    pass
 
 ops = ['plus', 'minus', 'divide', 'multiply']
 
