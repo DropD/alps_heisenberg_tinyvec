@@ -8,6 +8,9 @@
 * ~~Third but last paragraph: "For the update step we will pick a random spin potential new direction vector for it." is there an "and" missing? [OK]~~
 * ~~Second but last paragraph: "[...] and will tell us together [...]" - will tell us what? [OK]~~
 
+## Example experiment
+* ~~Write how many dimensions the model in the example has: O(3) [OK]~~
+
 ## The measure() function
 * ~~First sentence: weird English "In this example we target quantities will be energy[...]" [OK]~~
 * ~~"stands for averaging with respect to time.", I would not call it "time", as Monte Carlo doesn't provide a notion of time. It is just a statistical average over the samples. [OK]~~
@@ -17,4 +20,4 @@
 * ~~Test solution [OK]~~
 
 ## Results
-* Could you write a short interpretation of the results and maybe some comparison with literature?
+* ~~Could you write a short interpretation of the results and maybe some comparison with literature? [OK]~~

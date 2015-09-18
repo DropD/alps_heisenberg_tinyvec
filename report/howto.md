@@ -319,7 +319,7 @@ double ndim_spin_sim<N>::fraction_completed() const {
 }
 ```
 
-## Running an example experiment
+## Running an example O(3) experiment (also called Heisenberg model)
 All the steps involved in running an experiment are covered in greater detail in the ALPS documentation.
 There is different workflows available, the one shown here is python based because ALPS also provides some handy python modules.
 
