@@ -18,7 +18,7 @@
 \newcommand{\vec}[1]{\overrightarrow{#1}}
 
 \author{Rico H\"auselmann}
-\title{highlevel optimization of tinyvector}
+\title{tinyvector}
 
 \begin{document}
 \maketitle
@@ -38,8 +38,8 @@ The following mathematical operations are provided \cref{table:ops}. For some of
         $\vec{a} / \vec{b}$     & operator/ & yes & 1.7 \\
         $\vec{a} / x$           & operator/ & no & \\
         $\text{sum}(\vec{a})$   & sum       & no & \\
-        $\vec{a} \cdot \vec{b}$ & dot       & no & \\
-        $\lvert\vec{a}\rvert$   & abs       & no & \\
+        $\vec{a} \cdot \vec{b}$ & dot       & indirect & \\
+        $\lvert\vec{a}\rvert$   & abs       & indirect & \\
     \end{tabular} 
     \caption{\label{table:ops}Operations provided by \texttt{tinyvector}. $*$ and $/$ are to be read as element-wise, $\cdot$ means dot product. Optimized versions are provided only for tinyvectors with value type double. The values in typical speedup are for a loop over $10^3$ operations for 4-dimensional vectors.}
 \end{table}
