@@ -17,3 +17,4 @@ nd_testing/test/phase_transition/*.pdf
 *.trace
 results.txt
 .svn/
+benchmarks/runs/
